@@ -1,0 +1,20 @@
+# 密钥 / 凭据（禁止提交）
+# Calendar 的 access token 只存 iPad 钥匙串，任何情况下都不应出现在仓库里
+.env
+.env.*
+*.local.xcconfig
+
+# Xcode 用户态（窗口布局、scheme 管理），与代码无关
+**/xcuserdata/
+*.xcuserstate
+
+# 构建产物
+build/
+DerivedData/
+
+# 系统 / 编辑器
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log

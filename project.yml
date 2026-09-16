@@ -1,0 +1,70 @@
+name: AI0506Reminders
+options:
+  bundleIdPrefix: com.ai0506
+  deploymentTarget:
+    iOS: "18.0"
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    DEVELOPMENT_TEAM: ""
+schemes:
+  AI0506Reminders:
+    build:
+      targets:
+        AI0506Reminders: all
+        AI0506RemindersWidgets: all
+    test:
+      targets:
+        - AI0506RemindersTests
+targets:
+  AI0506Reminders:
+    type: application
+    platform: iOS
+    sources:
+      - path: Reminders
+      - path: Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ai0506.reminders
+        PRODUCT_NAME: AI0506 Reminders
+        TARGETED_DEVICE_FAMILY: "2"
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: Reminders/Info.plist
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        CODE_SIGN_ENTITLEMENTS: Reminders/Reminders.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    dependencies:
+      - target: AI0506RemindersWidgets
+        embed: true
+  AI0506RemindersWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Widgets
+      - path: Reminders/Models
+      - path: Reminders/Theme
+      - path: Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ai0506.reminders.widgets
+        PRODUCT_NAME: AI0506 Reminders Widgets
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        CODE_SIGN_ENTITLEMENTS: Widgets/RemindersWidgets.entitlements
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: Widgets/Info.plist
+  AI0506RemindersTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Tests
+    dependencies:
+      - target: AI0506Reminders
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ai0506.reminders.tests
+        GENERATE_INFOPLIST_FILE: YES
+        TARGETED_DEVICE_FAMILY: "2"
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/AI0506 Reminders.app/AI0506 Reminders"
+        BUNDLE_LOADER: "$(TEST_HOST)"
