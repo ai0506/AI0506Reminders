@@ -18,7 +18,7 @@ AI0506 Reminders：面向 11 英寸 iPad Pro 的原生 Deadline 管理 App（Swi
 
 Calendar 后端在 `/Users/shuwenai/Desktop/Projects/Calendar`（Cloudflare Pages + Pages Functions + D1）。改任何涉及数据语义的东西之前先去那边核对，不要在 iPad 侧自行发明规则。
 
-**这个目录不是 git 仓库。** 不要用 `git diff` / `git log` / `git status` 判断改了什么——看不到。要确认当前状态就直接读文件。
+远程仓库：<https://github.com/ai0506/AI0506Reminders>（公开，主分支 `main`）。
 
 ## 常用命令
 
@@ -37,6 +37,18 @@ xcodebuild -project AI0506Reminders.xcodeproj -scheme AI0506Reminders -destinati
 - 工程文件由 **XcodeGen 从 `project.yml` 生成**。增删文件、改 target 设置、改 bundle id 都改 `project.yml` 再 `xcodegen generate`，**不要手改 `.xcodeproj/project.pbxproj`**——下次生成会被覆盖。
 - 测试用的是 **Swift Testing**（`import Testing` / `@Test`），不是 XCTest。新增用例跟着现有写法走。
 - 要在模拟器里看界面，用 iOS Simulator 工具（attach / screenshot / inspect），不要用 Bash 去敲 `simctl` 拼流程。
+
+## Git 约定
+
+与 Calendar 仓库保持一致：
+
+- **提交信息用英文**，祈使句，首行一句话说清做了什么；需要展开就空一行写正文，解释**为什么**这么改。不写流水账式的「update files」。
+- 末尾加一行 `Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>`。
+- 主分支 `main`。
+- `project.yml` 是工程的真相来源，但生成出来的 `AI0506Reminders.xcodeproj` **也提交**（跟 Calendar 的 `mac-app` 一样），这样别人不跑 XcodeGen 也能打开。改完 `project.yml` 记得把重新生成的 pbxproj 一起提交。
+- `**/xcuserdata/` 和 `*.xcuserstate` 是 Xcode 的窗口布局与个人 scheme，已在 `.gitignore` 里，不要提交。
+- **只在用户要求时提交或推送。**
+- `updates.md` 的记录照写不误——它记的是「为什么这么做、验证了什么、什么没做到」，和 git history 互补，不是重复。
 
 ## 权威文档：按问题找，别通读
 
