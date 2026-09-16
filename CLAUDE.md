@@ -47,7 +47,9 @@ xcodebuild -project AI0506Reminders.xcodeproj -scheme AI0506Reminders -destinati
 - 主分支 `main`。
 - `project.yml` 是工程的真相来源，但生成出来的 `AI0506Reminders.xcodeproj` **也提交**（跟 Calendar 的 `mac-app` 一样），这样别人不跑 XcodeGen 也能打开。改完 `project.yml` 记得把重新生成的 pbxproj 一起提交。
 - `**/xcuserdata/` 和 `*.xcuserstate` 是 Xcode 的窗口布局与个人 scheme，已在 `.gitignore` 里，不要提交。
-- **只在用户要求时提交或推送。**
+- **完成一段完整的改动就自己 commit**，不用等用户开口——本地提交可撤销，有提交点用户才能看 diff、才能回滚。
+  但**推送到 GitHub 前要先问**：这是公开仓库，推出去会被缓存和索引，`git reset` 撤不干净。
+  另外这个工作区有 Codex 同时在改，提交前先确认工作区里没有别人没做完的中间状态。
 - `updates.md` 的记录照写不误——它记的是「为什么这么做、验证了什么、什么没做到」，和 git history 互补，不是重复。
 
 ## 权威文档：按问题找，别通读
