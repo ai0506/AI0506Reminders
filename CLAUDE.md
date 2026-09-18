@@ -37,6 +37,12 @@ xcodebuild -project AI0506Reminders.xcodeproj -scheme AI0506Reminders -destinati
 - 工程文件由 **XcodeGen 从 `project.yml` 生成**。增删文件、改 target 设置、改 bundle id 都改 `project.yml` 再 `xcodegen generate`，**不要手改 `.xcodeproj/project.pbxproj`**——下次生成会被覆盖。
 - 测试用的是 **Swift Testing**（`import Testing` / `@Test`），不是 XCTest。新增用例跟着现有写法走。
 - 要在模拟器里看界面，用 iOS Simulator 工具（attach / screenshot / inspect），不要用 Bash 去敲 `simctl` 拼流程。
+- **优先看横屏**。这是 iPad 应用的主形态，三栏布局只有横屏才完整，用户明确要求以横屏为准。
+  **但 agent 目前转不了屏**：`simctl` 没有转屏命令；`osascript` 发 `keystroke` 被拒（`-1002`）；
+  点 Device 菜单能解析到菜单项引用、`click` 却静默失败（缺辅助功能权限）。
+  所以横屏截图要么请用户在 Simulator 里按 `Cmd+←` 转一次（设备会记住方向），
+  要么请用户在系统设置 → 隐私与安全性 → 辅助功能里给终端授权。
+  **不要反复重试 osascript**，会白烧时间。已经是横屏时正常截图即可。
 
 ## Git 约定
 
