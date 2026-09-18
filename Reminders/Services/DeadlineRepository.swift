@@ -6,6 +6,24 @@ protocol DeadlineRepository {
     func fetchCatalog() async throws -> DeadlineCatalog
     func create(_ draft: DeadlineDraft) async throws -> Deadline
     func setCompletion(_ deadline: Deadline, completed: Bool) async throws -> Deadline
+
+    // MARK: 课程上下文（只有 AI 草稿用得到）
+
+    /// 全量课程目录，含停用课程——历史课程仍要能被名字命中。
+    func fetchCourseCatalog() async throws -> [Course]
+    /// 指定日期范围的课表投影；被请假的课在后端就已经不返回了。
+    func fetchCourseSchedule(from: Date, to: Date) async throws -> [CourseOccurrence]
+    /// 未完成 Deadline，**不带日期窗口**：逾期未交的作业也算未完成，
+    /// 带窗口会让它从课程上下文里消失。普通列表仍然走 `fetchDeadlines()` 的范围读取。
+    func fetchOpenDeadlinesForCourseContext() async throws -> [Deadline]
+}
+
+/// 演示仓库和将来的其它实现不必提供课程上下文：拿不到候选时 `course_id` 保持 nil，
+/// 草稿照样能创建，只是不带课程归属。
+extension DeadlineRepository {
+    func fetchCourseCatalog() async throws -> [Course] { [] }
+    func fetchCourseSchedule(from: Date, to: Date) async throws -> [CourseOccurrence] { [] }
+    func fetchOpenDeadlinesForCourseContext() async throws -> [Deadline] { try await fetchDeadlines().filter { !$0.isCompleted } }
 }
 
 struct DeadlineCatalog {
@@ -40,6 +58,7 @@ struct MockDeadlineRepository: DeadlineRepository {
             dueDate: draft.dueDate,
             allDay: draft.allDay,
             category: draft.category, subject: draft.subject,
+            courseID: draft.courseID,
             tags: draft.tags,
             priority: draft.priority,
             status: .open,

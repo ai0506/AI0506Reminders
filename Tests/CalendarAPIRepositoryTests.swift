@@ -252,6 +252,103 @@ struct CalendarAPIRepositoryTests {
         #expect(StubURLProtocol.requests.last?.url.path == "/api/deadlines/ddl-1/reopen")
     }
 
+    // MARK: 课程上下文
+
+    @Test
+    func decodesTheCourseCatalogIncludingRetiredCourses() async throws {
+        let repository = makeRepository(["/api/course-catalog": ok("""
+        {"ok":true,"data":[
+          {"id":"course-g11-09","name":"ESL 1层雅思写作","subject_id":"sub-english","active":1},
+          {"id":"course-old","name":"Speaking L1A","subject_id":"sub-english","active":0}
+        ]}
+        """)])
+
+        let courses = try await repository.fetchCourseCatalog()
+        #expect(courses.map(\.id) == ["course-g11-09", "course-old"])
+        // active 是 0/1 不是布尔；停用课程必须留在目录里，否则历史课程名就命不中了。
+        #expect(courses.first?.active == true)
+        #expect(courses.last?.active == false)
+    }
+
+    @Test
+    func courseScheduleSendsTheRequiredRangeAndParsesWallClockTimes() async throws {
+        let repository = makeRepository(["/api/course-schedule": ok("""
+        {"ok":true,"data":[{
+          "id":"course:slot-9:2026-09-18","date":"2026-09-18","course_id":"course-g11-09",
+          "course_slot_id":"slot-9","title":"ESL 1层雅思写作","subject_id":"sub-english",
+          "start_time":"2026-09-18T14:00:00+08:00","end_time":"2026-09-18T14:45:00+08:00","status":"scheduled"
+        }]}
+        """)])
+
+        let occurrences = try await repository.fetchCourseSchedule(
+            from: Date(timeIntervalSince1970: 1_789_000_000),
+            to: Date(timeIntervalSince1970: 1_789_600_000)
+        )
+        let occurrence = try #require(occurrences.first)
+        #expect(occurrence.courseID == "course-g11-09")
+        #expect(occurrence.end.timeIntervalSince(occurrence.start) == 45 * 60)
+
+        // from / to 是必填，少一个后端直接 400。
+        let request = try #require(StubURLProtocol.requests.first)
+        let query = try #require(URLComponents(url: request.url, resolvingAgainstBaseURL: false)?.queryItems)
+        #expect(query.contains { $0.name == "from" })
+        #expect(query.contains { $0.name == "to" })
+    }
+
+    /// 课程上下文这一条读取**不能**带日期窗口：逾期未交的作业仍是未完成作业，
+    /// 加了窗口它就从上下文里消失了。普通列表照旧带范围。
+    @Test
+    func openDeadlinesForCourseContextAreFetchedWithoutADateWindow() async throws {
+        let repository = makeRepository(["/api/deadlines": ok("""
+        {"ok":true,"data":[{
+          "id":"ddl-2","title":"Read Chapter 4","due_time":"2026-09-10","all_day":true,
+          "category":"Academics","subject_id":"sub-english","course_id":"course-g11-10",
+          "priority":"default","status":"overdue","is_overdue":true,"completed_at":null,
+          "tags":[{"id":"tag-homework","name":"Homework"}],"updated_at":"2026-09-09T10:00:00+08:00"
+        }]}
+        """)])
+
+        let deadlines = try await repository.fetchOpenDeadlinesForCourseContext()
+        #expect(deadlines.first?.courseID == "course-g11-10")
+
+        let request = try #require(StubURLProtocol.requests.first)
+        let query = try #require(URLComponents(url: request.url, resolvingAgainstBaseURL: false)?.queryItems)
+        #expect(query.contains { $0.name == "include_completed" && $0.value == "false" })
+        #expect(!query.contains { $0.name == "from" })
+        #expect(!query.contains { $0.name == "to" })
+    }
+
+    @Test
+    func createSendsCourseIDOnlyAlongsideASubject() async throws {
+        let created = """
+        {"ok":true,"data":{"id":"new","title":"t","due_time":"2026-09-20T09:00:00+08:00","all_day":false,
+        "category":"Academics","subject_id":"sub-english","course_id":"course-g11-09","priority":"default",
+        "tags":[],"updated_at":"2026-09-18T09:00:00+08:00"}}
+        """
+        var repository = makeRepository(["/api/deadlines": .init(status: 201, body: Data(created.utf8))])
+
+        var draft = DeadlineDraft()
+        draft.title = "把作文改完"
+        draft.category = .init(id: "cat-academics", name: "Academics", colorHex: "#655f58", kind: "academics")
+        draft.subject = .init(id: "sub-english", name: "English", categoryID: "cat-academics", colorHex: "#ff9f0a")
+        draft.courseID = "course-g11-09"
+        let deadline = try await repository.create(draft)
+
+        var request = try #require(StubURLProtocol.requests.first)
+        var body = try #require(try JSONSerialization.jsonObject(with: request.body) as? [String: Any])
+        #expect(body["course_id"] as? String == "course-g11-09")
+        #expect(body["subject_id"] as? String == "sub-english")
+        #expect(deadline.courseID == "course-g11-09")
+
+        // 没有 subject 的草稿带 course_id 必然被后端 400，所以客户端就不送。
+        repository = makeRepository(["/api/deadlines": .init(status: 201, body: Data(created.utf8))])
+        draft.subject = nil
+        _ = try await repository.create(draft)
+        request = try #require(StubURLProtocol.requests.first)
+        body = try #require(try JSONSerialization.jsonObject(with: request.body) as? [String: Any])
+        #expect(body["course_id"] == nil || body["course_id"] is NSNull)
+    }
+
     // MARK: 错误
 
     /// 后端的错误信封要被拆开取 message，不能把整个响应体抛给用户（规格 §7.3）。

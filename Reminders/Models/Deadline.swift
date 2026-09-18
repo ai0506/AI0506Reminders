@@ -68,6 +68,11 @@ struct Deadline: Identifiable, Codable, Hashable {
     var category: DeadlineCategory
     var subject: DeadlineSubject?
     var subjectID: String? { subject?.id }
+    /// 关联的具体课程（Calendar 的 `deadlines.course_id`，migration 0015）。
+    /// 与 `subject`（学科）和 `tags`（任务性质）三者互不替代：English 是学科，
+    /// Homework 是性质，「ESL 1层雅思写作」才是课程。后端只在写入时校验它与
+    /// `subject_id` 一致，不看课程是否停用，所以历史归属不会随学期消失。
+    var courseID: String?
     var tags: [DeadlineTag]
     var priority: DeadlinePriority
     var status: DeadlineStatus
@@ -84,6 +89,7 @@ struct DeadlineDraft: Hashable {
     var allDay = false
     var category = DeadlineCategory.all[0]
     var subject: DeadlineSubject?
+    var courseID: String?
     var tags: [DeadlineTag] = []
     var priority: DeadlinePriority = .default
 }
