@@ -348,7 +348,7 @@ POST /api/deadlines
 
 ## 9. AI 功能
 
-第一版先做完整的 AI 前端、用模拟解析占位；现已接入**设备端** Apple Foundation Models。
+第一版先做完整的 AI 前端、用模拟解析占位；现已接入**设备端** Apple Foundation Models。下一版调用重构的实施契约见 `AI_CALL_PLAN_V2.md`：它采用“语义理解 → 受限目录绑定”的两阶段流程，不采用双路投票或仲裁。
 
 ### 用户流程
 
