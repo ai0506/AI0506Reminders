@@ -20,6 +20,10 @@ AI0506 Reminders：面向 11 英寸 iPad Pro 的原生 Deadline 管理 App（Swi
 
 Calendar 后端在 `/Users/shuwenai/Desktop/Projects/Calendar`（Cloudflare Pages + Pages Functions + D1）。改任何涉及数据语义的东西之前先去那边核对，不要在 iPad 侧自行发明规则。
 
+**那个仓库可以随时直接读**（用户明确授权过），不用先问、也不用等用户贴代码过来：迁移脚本、
+`functions/` 里的校验、`public/app.js` 的交互都去看原文。**写**那边仍按〈跨项目改动〉一节走——
+两边的 `updates.md` 都要记，提交和推送要先问。
+
 远程仓库：<https://github.com/ai0506/AI0506Reminders>（公开，主分支 `main`）。
 
 ## 常用命令
@@ -40,11 +44,18 @@ xcodebuild -project AI0506Reminders.xcodeproj -scheme AI0506Reminders -destinati
 - 测试用的是 **Swift Testing**（`import Testing` / `@Test`），不是 XCTest。新增用例跟着现有写法走。
 - 要在模拟器里看界面，用 iOS Simulator 工具（attach / screenshot / inspect），不要用 Bash 去敲 `simctl` 拼流程。
 - **优先看横屏**。这是 iPad 应用的主形态，三栏布局只有横屏才完整，用户明确要求以横屏为准。
-  **但 agent 目前转不了屏**：`simctl` 没有转屏命令；`osascript` 发 `keystroke` 被拒（`-1002`）；
+  **但 agent 转不了屏**：`simctl` 没有转屏命令；`osascript` 发 `keystroke` 被拒（`-1002`）；
   点 Device 菜单能解析到菜单项引用、`click` 却静默失败（缺辅助功能权限）。
-  所以横屏截图要么请用户在 Simulator 里按 `Cmd+←` 转一次（设备会记住方向），
-  要么请用户在系统设置 → 隐私与安全性 → 辅助功能里给终端授权。
-  **不要反复重试 osascript**，会白烧时间。已经是横屏时正常截图即可。
+  **不要反复重试 osascript**，会白烧时间——请用户在 Simulator 里按一次 `Cmd+←`，设备会记住方向。
+- **转成横屏之后，截图和点击都要自己换算**（实测，2026-09-18）：
+  - 截图缓冲区仍是竖屏尺寸（1668×2420），内容是躺着的。用 `sips -r -90 shot.png --out shot-r.png`
+    转正了再读，否则读到的是一张侧过来的图。
+  - iOS Simulator 工具的 `screenshot` 这时会报 `captureFailed`，改用
+    `xcrun simctl io <udid> screenshot -t png <文件>`（这是那条「别用 Bash 拼 simctl 流程」的例外：
+    工具拍不出来，只能走它）。
+  - `tap` / `swipe` 的坐标仍是**竖屏点坐标系**（834×1210）。从转正后的横屏点 `(lx, ly)` 换算：
+    `tap_x = 834 - ly`、`tap_y = lx`。第一次用先拿一个显眼的按钮验一下，方向反了就是另一边转的。
+  - 转屏会把 App 踢回主屏，记得 `xcrun simctl launch <udid> com.ai0506.reminders` 重新起一次。
 
 ## Git 约定
 
