@@ -101,6 +101,17 @@ struct CourseContextBuilder {
                     nextOccurrence: nextByCourse[course.id]
                 )
             }
+            // 今天上过、而且还没记过作业的课排前面：刚上完又没录入，正是最可能要记的那门。
+            //
+            // 这是**排序**，不是排除——上面那条注释说的「已有作业不能把课程踢出候选」仍然成立，
+            // 有作业的课只是排在后面。而且 directMatch 走的是完整目录、不受候选数限制，
+            // 用户写了课程名时一定能命中它。
+            .sorted { lhs, rhs in
+                if lhs.openCoursework.isEmpty != rhs.openCoursework.isEmpty {
+                    return lhs.openCoursework.isEmpty
+                }
+                return (lhs.completedOccurrence?.end ?? .distantPast) > (rhs.completedOccurrence?.end ?? .distantPast)
+            }
             .prefix(Self.maxContextualCandidates)
 
         return candidates.isEmpty ? .none : .contextual(Array(candidates))
@@ -108,20 +119,52 @@ struct CourseContextBuilder {
 
     // MARK: - 组件
 
-    /// 唯一完整名称命中。第一版不做别名，也不做部分词匹配：
-    /// 宁可退回 contextual 候选，也不要猜错课程。
+    /// 字面命中：先试全名，再试去掉编制修饰后的短名。
+    ///
+    /// 只比全名的话覆盖不了真实写法——课程在 Calendar 里叫「AS物理 L1」「ESL 1层 雅思写作」，
+    /// 而用户写的是「物理卷子」「经济学的论文」。实测去掉 AS/ESL 前缀与 L1A/1层B 这类
+    /// 等级标记之后，「经济学的论文」能命中 AS经济、「雅思口语作业」能命中 ESL 1层B 雅思口语，
+    /// 这两条在纯靠模型判断时是错的。
+    ///
+    /// 两种都要求**唯一**命中：分不清就退回候选交给模型，别赌。
     private func directMatch(input: String, catalog: [Course]) -> Course? {
         let text = input.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return nil }
-        let matches = catalog.filter { course in
-            let name = course.name.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !name.isEmpty else { return false }
-            return text.localizedCaseInsensitiveContains(name)
+
+        if let exact = uniqueMatch(in: catalog, text: text, key: {
+            $0.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        }) {
+            return exact
         }
-        // 同名或同时命中多门课时不算直接命中——分不清就交给模型，别赌。
-        let distinct = Set(matches.map(\.id))
-        guard distinct.count == 1 else { return nil }
+        return uniqueMatch(in: catalog, text: text, key: { Self.shortName($0.name) })
+    }
+
+    private func uniqueMatch(in catalog: [Course], text: String, key: (Course) -> String) -> Course? {
+        let matches = catalog.filter { course in
+            let needle = key(course)
+            guard !needle.isEmpty, Self.isDistinctiveEnough(needle) else { return false }
+            return text.localizedCaseInsensitiveContains(needle)
+        }
+        guard Set(matches.map(\.id)).count == 1 else { return nil }
         return matches.first
+    }
+
+    /// 去掉学校的编制修饰，留下用户嘴里会说的那部分。
+    /// 「AS物理 L1」→「物理」，「ESL 1层B 雅思口语」→「雅思口语」，「AS经济」→「经济」。
+    static func shortName(_ name: String) -> String {
+        var value = name
+        value = value.replacingOccurrences(of: #"\bL\d+[A-Za-z]?\b"#, with: "", options: .regularExpression)
+        value = value.replacingOccurrences(of: #"\d+层[A-Za-z]?"#, with: "", options: .regularExpression)
+        value = value.replacingOccurrences(of: #"^\s*(AS|ESL)\s*"#, with: "", options: [.regularExpression, .caseInsensitive])
+        return value.trimmingCharacters(in: .whitespaces)
+    }
+
+    /// 短名太短就不参与匹配，否则到处误命中。
+    /// 「EL L1」和「PE」去掉修饰只剩两个字母，几乎任何一句英文里都能撞上；
+    /// 中文两个字（「物理」「经济」）已经足够独特。
+    private static func isDistinctiveEnough(_ needle: String) -> Bool {
+        let isPlainASCII = needle.allSatisfy { $0.isASCII }
+        return isPlainASCII ? needle.count >= 4 : needle.count >= 2
     }
 
     private func completedToday(_ occurrences: [CourseOccurrence], now: Date) -> [CourseOccurrence] {

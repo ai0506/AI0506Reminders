@@ -156,6 +156,88 @@ struct CourseContextBuilderTests {
         #expect(candidates.map(\.course.id) == ["course-el", "course-writing", "course-retired"])
     }
 
+    // MARK: - 短名命中
+
+    @Test("去掉编制修饰后的短名", arguments: [
+        ("AS物理 L1", "物理"),
+        ("AS数学 L1A", "数学"),
+        ("AS经济", "经济"),
+        ("ESL 1层雅思写作", "雅思写作"),
+        ("ESL 1层B 雅思口语", "雅思口语"),
+        ("EL L1", "EL"),
+        ("Speaking L1A", "Speaking"),
+        ("计算机", "计算机")
+    ])
+    func shortNameStripsTheSchoolsScaffolding(_ input: String, _ expected: String) {
+        #expect(CourseContextBuilder.shortName(input) == expected)
+    }
+
+    @Test("用户说的是短名也能命中：课程叫「AS经济」，他写的是「经济学的论文」")
+    func shortNameMatchesWhatTheUserActuallyWrites() {
+        let context = CourseContextBuilder(timeZone: Self.shanghai).build(
+            input: "经济学的论文",
+            catalog: catalog,
+            occurrences: [],
+            openDeadlines: [],
+            now: Self.date("2026-09-19 10:00")
+        )
+        guard case .direct(let candidate) = context else {
+            Issue.record("应当直接命中 AS经济，实际是 \(context)")
+            return
+        }
+        #expect(candidate.course.id == "course-econ")
+    }
+
+    @Test("短名命中同样不受当天课表限制——周末写「雅思写作的作文」也算数")
+    func shortNameMatchIsNotLimitedToTodaysTimetable() {
+        let context = CourseContextBuilder(timeZone: Self.shanghai).build(
+            input: "雅思写作的作文改完",
+            catalog: catalog,
+            occurrences: [],
+            openDeadlines: [],
+            now: Self.date("2026-09-19 10:00")
+        )
+        guard case .direct(let candidate) = context else {
+            Issue.record("应当命中雅思写作，实际是 \(context)")
+            return
+        }
+        #expect(candidate.course.id == "course-writing")
+    }
+
+    @Test("短名太短的课程不参与匹配，否则两个字母到处都能撞上")
+    func tooShortAShortNameNeverMatches() {
+        // 「EL L1」的短名是 "EL"，下面这句里就含 "el"（travel）。
+        let context = CourseContextBuilder(timeZone: Self.shanghai).build(
+            input: "book the travel tickets",
+            catalog: catalog,
+            occurrences: [],
+            openDeadlines: [],
+            now: Self.date("2026-09-19 10:00")
+        )
+        #expect(context == .none)
+    }
+
+    // MARK: - 候选排序
+
+    @Test("今天上过、且还没记过作业的课排在前面")
+    func coursesWithoutLoggedCourseworkComeFirst() {
+        let context = CourseContextBuilder(timeZone: Self.shanghai).build(
+            input: "把作业写了",
+            catalog: catalog,
+            // EL L1 15:45 比写作 14:45 晚，但 EL L1 已经记过作业了。
+            occurrences: friday,
+            openDeadlines: [deadline(id: "d1", courseID: "course-el", tags: ["Homework"])],
+            now: Self.date("2026-09-18 16:50")
+        )
+        guard case .contextual(let candidates) = context else {
+            Issue.record("应当有当天候选，实际是 \(context)")
+            return
+        }
+        #expect(candidates.first?.course.id == "course-writing")
+        // 排序不等于排除：一门课一天可以留两份作业，EL L1 必须仍在候选里。
+        #expect(candidates.map(\.course.id).contains("course-el"))
+    }
+
     @Test
     func oneCandidatePerCourseEvenWithTwoLessonsInADay() {
         let doubled = friday + [occurrence("course:slot-w2:2026-09-18", "course-writing", "ESL 1层雅思写作",
