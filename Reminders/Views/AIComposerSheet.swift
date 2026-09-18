@@ -163,7 +163,8 @@ struct AIComposerSheet: View {
                         result: Binding(get: { result }, set: { self.result = $0 }),
                         categories: categories,
                         subjects: subjects,
-                        availableTags: availableTags
+                        availableTags: availableTags,
+                        tagSuggestions: store.tagSuggestions
                     )
                 }
             }
@@ -296,6 +297,11 @@ private struct AIDraftEditor: View {
     let categories: [DeadlineCategory]
     let subjects: [DeadlineSubject]
     let availableTags: [DeadlineTag]
+    let tagSuggestions: [String: [String]]
+
+    private var suggestedTagIDs: [String] {
+        TagSuggestions.ids(in: tagSuggestions, category: result.draft.category, subject: result.draft.subject)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -314,18 +320,16 @@ private struct AIDraftEditor: View {
                     TextField("标题", text: $result.draft.title).multilineTextAlignment(.trailing)
                 }
                 Divider()
-                DraftField(title: "分类") {
-                    Picker("分类", selection: $result.draft.category) {
-                        ForEach(categories) { Text($0.name).tag($0) }
-                    }.labelsHidden()
+                draftRow {
+                    CategoryPicker(categories: categories, selection: $result.draft.category)
                 }
                 Divider()
                 if result.draft.category.kind == "academics" {
-                    DraftField(title: "学科") {
-                        Picker("学科", selection: $result.draft.subject) {
-                            Text("未指定").tag(DeadlineSubject?.none)
-                            ForEach(subjects.filter { $0.categoryID == result.draft.category.id }) { subject in Text(subject.name).tag(DeadlineSubject?.some(subject)) }
-                        }.labelsHidden()
+                    draftRow {
+                        SubjectPicker(
+                            subjects: subjects.filter { $0.categoryID == result.draft.category.id },
+                            selection: $result.draft.subject
+                        )
                     }
                     Divider()
                     // 课程是**只读归属**，不是第四个导航维度（Frontend_spec §18.4）：
@@ -361,7 +365,9 @@ private struct AIDraftEditor: View {
                 DraftField(title: "优先级") {
                     Picker("优先级", selection: $result.draft.priority) {
                         ForEach(DeadlinePriority.allCases) { Text($0.title).tag($0) }
-                    }.labelsHidden()
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.segmented)
                 }
             }
             .padding(.horizontal, 16)
@@ -371,7 +377,7 @@ private struct AIDraftEditor: View {
                 .font(.subheadline)
                 .padding(.horizontal, 4)
 
-            TagPicker(tags: $result.draft.tags, availableTags: availableTags)
+            TagPicker(tags: $result.draft.tags, availableTags: availableTags, suggestedIDs: suggestedTagIDs)
                 .padding(.horizontal, 4)
 
             VStack(alignment: .leading, spacing: 7) {
@@ -397,6 +403,16 @@ private struct AIDraftEditor: View {
 }
 
 private extension AIDraftEditor {
+    /// 分类 / 学科的胶囊要横向铺开，塞不进 `DraftField` 那个 290pt 的右对齐槽，
+    /// 所以这两行整行给选择器用（标题由选择器自己的 `FieldCaption` 给），
+    /// 其余字段仍是 `DraftField` 的「左标题 + 右值」。
+    @ViewBuilder
+    func draftRow<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        content()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.vertical, 12)
+    }
+
     func clearCourse() {
         guard result.draft.courseID != nil else { return }
         result.draft.courseID = nil

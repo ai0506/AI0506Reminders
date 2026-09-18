@@ -25,7 +25,7 @@ struct ContentView: View {
         .tint(RemindersTheme.accent)
         .background(RemindersTheme.paper)
         .sheet(isPresented: $showingCreate) {
-            DeadlineEditorSheet(title: "新建截止事项", categories: store.categories, subjects: store.subjects, availableTags: store.availableTags) { draft in
+            DeadlineEditorSheet(title: "新建截止事项", categories: store.categories, subjects: store.subjects, availableTags: store.availableTags, tagSuggestions: store.tagSuggestions) { draft in
                 let created = await store.create(draft)
                 if created { showingCreate = false }
                 return created

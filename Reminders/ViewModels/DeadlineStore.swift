@@ -11,6 +11,9 @@ final class DeadlineStore {
     var categories = DeadlineCatalog.demo.categories
     var availableTags = DeadlineCatalog.demo.tags
     var subjects = DeadlineCatalog.demo.subjects
+    /// 标签推荐表，键是分类 id 或科目 id。只影响标签选择器的排序与「推荐」标记，
+    /// 拿不到就是空表，选择器照常可用。
+    var tagSuggestions = DeadlineCatalog.demo.tagSuggestions
     var selectedFilter: DeadlineFilter? = .today {
         didSet { reconcileSelectionWithFilter() }
     }
@@ -105,6 +108,7 @@ final class DeadlineStore {
                 categories = catalog.categories
                 availableTags = catalog.tags
                 subjects = catalog.subjects
+                tagSuggestions = catalog.tagSuggestions
             }
             deadlines = applyCatalog(to: fetchedDeadlines)
             SharedDeadlineCache.save(deadlines: deadlines)
@@ -274,6 +278,12 @@ final class DeadlineStore {
         } else {
             pendingDeadlineID = deadlineID
         }
+    }
+
+    /// 当前分类 / 科目下该优先显示哪些标签。规则与 Calendar 网页一致：
+    /// Academics 选了科目按科目找，其余按分类找。
+    func suggestedTagIDs(category: DeadlineCategory, subject: DeadlineSubject?) -> [String] {
+        TagSuggestions.ids(in: tagSuggestions, category: category, subject: subject)
     }
 
     func selectedFilterTitle() -> String {

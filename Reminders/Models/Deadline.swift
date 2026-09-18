@@ -40,6 +40,23 @@ enum DeadlineStatus: String, Codable {
 struct DeadlineTag: Identifiable, Codable, Hashable {
     let id: String
     var name: String
+
+    /// 后端硬约束：一个事项最多挂 5 个标签（`Calendar/functions/_lib/tags.js`）。
+    /// 客户端必须自己拦住，否则超了要等提交才吃 400。
+    static let maxPerDeadline = 5
+}
+
+extension Array where Element == DeadlineTag {
+    /// 选中 / 取消一个标签。已满 5 个时**不再加入**——界面上那些按钮同时也会被禁用，
+    /// 这里是最后一道闸，保证任何调用路径都不会攒出一个提交必然 400 的草稿。
+    /// 取消永远允许，否则满了以后就换不了标签了。
+    mutating func toggle(_ tag: DeadlineTag) {
+        if let index = firstIndex(of: tag) {
+            remove(at: index)
+        } else if count < DeadlineTag.maxPerDeadline {
+            append(tag)
+        }
+    }
 }
 
 struct DeadlineCategory: Identifiable, Codable, Hashable {

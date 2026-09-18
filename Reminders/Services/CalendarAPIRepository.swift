@@ -45,10 +45,21 @@ final class CalendarAPIRepository: DeadlineRepository {
             url: configuration.baseURL.appending(path: "api/subjects"),
             method: "GET"
         )
+        // 标签推荐允许缺席：老部署可能没有这个接口，而它只影响标签的排序与「推荐」标记。
+        // 用 try? 吞掉失败，不能让它把整份目录（分类 / 学科 / 标签）一起拖垮。
+        let suggestionResponse: APIEnvelope<[String: [String]]>? = try? await request(
+            url: configuration.baseURL.appending(path: "api/category-tag-suggestions"),
+            method: "GET"
+        )
         let categories = try categoryResponse.requireData().map(\.model)
         let tags = try tagResponse.requireData().map(\.model)
         let subjects = try subjectResponse.requireData().map(\.model)
-        return DeadlineCatalog(categories: categories, tags: tags, subjects: subjects)
+        return DeadlineCatalog(
+            categories: categories,
+            tags: tags,
+            subjects: subjects,
+            tagSuggestions: (try? suggestionResponse?.requireData()) ?? [:]
+        )
     }
 
     // MARK: 课程上下文

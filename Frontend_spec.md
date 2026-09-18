@@ -505,6 +505,10 @@ SwiftUI/iPadOS 使用覆盖式滚动指示器，不存在 Web 的滚动条占位
 - 必填与选填：标题必填；备注、标签、学科选填。
 - 校验：标题去空白后非空才允许提交；分类必须来自后端目录（且未归档）；学科仅在分类 `kind == "academics"` 时出现、必须属于该分类且 `active = 1`；
   **标签最多 5 个**（后端硬约束，见 `Calendar/API_DOC.md` §Tags），达到上限后其余标签按钮必须禁用，不得等到提交才由后端报 400。
+  上限必须**在点得动之前**就说清楚：标签区右上角常驻「已选 n/5」，达到上限时补「· 已达上限」。
+- 标签推荐：`GET /api/category-tag-suggestions` 给出当前分类 / 科目下的推荐标签，按它给的顺序排在「推荐」一组，
+  其余排在「全部标签」。归属规则与 Calendar 网页一致——Academics 选了科目按科目取，其余按分类取。
+  推荐拿不到时（老部署、离线）整份目录按原顺序显示，不得因此让标签选择器不可用。
 - 提交中：按钮文案变为「正在创建…」并禁用。
 - 提交失败：sheet 不关闭，字段全部保留，错误通过 alert 提示。
 - 成功后的行为：关闭 sheet，新建项插入列表并自动选中。
@@ -556,7 +560,16 @@ SwiftUI/iPadOS 使用覆盖式滚动指示器，不存在 Web 的滚动条占位
 本项目规则：
 
 > 一律使用 SwiftUI 原生 `Form`、`Section`、`Picker`、`DatePicker`、`Toggle`、`TextField`、`SecureField`、`TextEditor`、`List`、`ContentUnavailableView`、`ProgressView`，并统一套用 `.reminderCanvas()`。
-> 仅在系统控件确实无法表达时才自定义，目前的例外是标签选择：`TagPicker` + 自定义 `FlowLayout` 胶囊按钮。
+> 仅在系统控件确实无法表达时才自定义。当前的例外是**目录类多选 / 单选字段**：分类、学科、标签一律用
+> `CategoryPicker` / `SubjectPicker` / `TagPicker`（`CatalogChip` + `FlowLayout` 胶囊），不用弹出式 `Picker`。
+> 理由是效率：弹出式 `Picker` 要「点开菜单 → 点选值」两次点击加一次转场才换掉一个值，而这三个字段的候选项
+> 只有五六个、完全铺得下，胶囊一次点击就完成，当前值与其它候选还能同时可见；这也和 Calendar 网页的
+> 分类色块 / 标签 chip 是同一套交互。**优先级仍用原生 `Picker`**，但取 `.pickerStyle(.segmented)`，
+> 同样是一次点击。日期、时间、开关、文本输入不得自造。
+>
+> 胶囊必须「色点 + 名称」，不得做成 Calendar 网页那种纯色圆点——那边靠 hover tooltip 补名称，触摸屏上没有 hover，
+> 而且颜色不能是信息的唯一载体（§3.3）。选中态用该项自己的**数据颜色**描边 + 淡填充，不借用主题 `accent`；
+> 标签没有数据色，选中态才用 `accent`。最低触控尺寸 44pt（§16.5）。
 > 自定义按钮位于 `Form` 行内时必须显式指定 `.buttonStyle(.borderless)`，否则 `Form` 会把同一行的多个按钮合并成行级操作（已发生过：点单个标签会切换全部标签）。
 
 同一产品内不得混用多套明显不同的交互体系。新增控件优先复用已有组件（见第 14 节）。
@@ -685,13 +698,18 @@ PaperCard / .paperCard()      卡片表面
 .reminderCanvas()             List/Form 深色安全画布
 DeadlineRow                   列表行
 DetailLine                    详情键值行
-TagPicker                     标签多选
+CategoryPicker                分类单选（色点胶囊）
+SubjectPicker                 学科单选（含「未指定」）
+TagPicker                     标签多选（含推荐分组与 5 个上限）
+FieldCaption                  胶囊上方的字段小标题
 FlowLayout                    自适应换行布局
 DraftField                    AI 草稿字段行
 ContentUnavailableView        空态（系统）
 ```
 
 不得因为新页面方便就重新造第二套卡片、标签、空态或字段行。
+上面四个目录类选择器都在 `Reminders/Views/CatalogPickers.swift`，创建表单与 AI 草稿页共用同一份；
+新增目录类字段接着用它们，不要再写一套胶囊。
 
 ## 14.2 新组件
 
@@ -888,7 +906,8 @@ plus      → "新建截止事项"
   不得让用户以为设备端模型就是这个水平。
 - AI 结果**不得**未经用户确认直接写入。
 - 草稿的全部字段可编辑：标题、分类、学科、截止、全天、优先级、标签、备注。
-- 显示解析置信度，但置信度不得作为是否允许创建的门槛。
+- 不显示解析置信度。那个数字是模型自评的，实测只在 0.9 / 0.7 之间跳，既指不出哪一格可能错、也不随证据变化；
+  要给用户的是「凭什么这么填、该检查哪一项」（比如课程归属的依据），不是一个百分比。
 - **第 3 步必须同屏显示原文**——草稿是对原文的解读，用户要能当场核对。
 - 「修改原文」退回第 1 步，**输入框里的文字原样保留**（§2.3）。
 - 第 2 步必须可取消，取消退回第 1 步并保留原文，不得只能等它跑完。
@@ -1107,7 +1126,6 @@ xcodebuild -project AI0506Reminders.xcodeproj -scheme AI0506Reminders -destinati
 | `CalendarAPIRepository` 学科解析 | 学科 `active = 0` 时 `GET /api/subjects` 不返回，`applyCatalog` 查不到，详情页与筛选中该学科静默消失（DTO 占位 name 为空字符串） | 目录只取启用中的学科 | 待处理 |
 | `Deadline.isOverdue` | 全天 Deadline 在截止日当天 00:00 后即被判为逾期并标红，与后端「当天仍为 open、次日按 Asia/Shanghai 转 overdue」的规则冲突 | 本地用 `dueDate < Date()` 计算，未区分全天 | 待处理 |
 | `DeadlineStore.groups` / 今天·逾期筛选 | 使用设备时区 `Calendar.current` 分组，设备不在上海时区时与后端「今天」不一致 | 未固定时区锚点 | 待处理 |
-| `TagPicker` | 没有 5 个标签的上限，超过后要等提交才由后端返回 400 | 客户端未实现后端硬约束 | 待处理 |
 | 减少动态效果 | 尚未在代码中显式读取 `accessibilityReduceMotion` | 目前仅使用系统默认过渡 | 待处理 |
 | Widget | 只有 Today（未来事项）Widget，规划中的 Upcoming / Overdue Widget 未实现 | 分阶段实施，Phase 5 未完成 | 待处理 |
 | AI 草稿的课程归属 | 记作业习惯（卷子→物理、页码→CS 等）内置在客户端 | `courses` 表有 `notes` 字段，但 `GET /api/course-catalog` 不返回它，暂时放不到后端 | 已接受（待后端补字段后迁移） |

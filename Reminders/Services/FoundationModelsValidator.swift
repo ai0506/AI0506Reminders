@@ -92,7 +92,7 @@ enum Validator {
         return names
             .compactMap { catalog.tag(named: $0) }
             .filter { seen.insert($0.id).inserted }
-            .prefix(5)
+            .prefix(DeadlineTag.maxPerDeadline)
             .map { $0 }
     }
 

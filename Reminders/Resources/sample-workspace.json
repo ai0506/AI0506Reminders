@@ -8,7 +8,10 @@
     "避免再次出现『文档写 Personal、库里其实叫 Leisure』这类漂移。",
     "",
     "deadlines 用相对天数而不是绝对日期，否则过几天『今天』视图就空了。",
-    "due_offset_days 相对当天（Asia/Shanghai），due_time 是 HH:mm，全天项为 null。"
+    "due_offset_days 相对当天（Asia/Shanghai），due_time 是 HH:mm，全天项为 null。",
+    "",
+    "tag_suggestions 的键与 GET /api/category-tag-suggestions 一致：普通分类用 categories.id，",
+    "Academics 的科目用 subjects.id，两套 id 不重名。值按推荐顺序排列。"
   ],
 
   "categories": [
@@ -32,8 +35,22 @@
     { "id": "tag-exam",    "name": "exam",    "color": "#ff3b30" },
     { "id": "tag-urgent",  "name": "urgent",  "color": "#ff9f0a" },
     { "id": "tag-writing", "name": "writing", "color": "#7f5fb5" },
-    { "id": "tag-review",  "name": "review",  "color": "#30b855" }
+    { "id": "tag-review",  "name": "review",  "color": "#30b855" },
+    { "id": "tag-homework", "name": "homework", "color": "#0a84ff" },
+    { "id": "tag-reading",  "name": "reading",  "color": "#32ade6" },
+    { "id": "tag-lab",      "name": "lab",      "color": "#64748b" }
   ],
+
+  "tag_suggestions": {
+    "cat-academics": ["tag-homework", "tag-exam"],
+    "cat-research":  ["tag-writing", "tag-reading", "tag-review"],
+    "cat-project":   ["tag-review", "tag-urgent"],
+    "cat-other":     ["tag-urgent"],
+    "sub-math":      ["tag-homework", "tag-exam", "tag-review"],
+    "sub-physics":   ["tag-lab", "tag-exam"],
+    "sub-cs":        ["tag-homework", "tag-lab"],
+    "sub-english":   ["tag-writing", "tag-reading"]
+  },
 
   "deadlines": [
     { "id": "fake-proposal",  "title": "Submit research proposal", "description": "Revised methods section and a one-page timeline.",

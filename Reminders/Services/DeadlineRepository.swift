@@ -30,8 +30,27 @@ struct DeadlineCatalog {
     var categories: [DeadlineCategory]
     var tags: [DeadlineTag]
     var subjects: [DeadlineSubject]
+    /// 标签推荐：键是**分类 id 或科目 id**，两套 id 混在同一张表里（后端
+    /// `GET /api/category-tag-suggestions` 就是这么返回的），值按推荐顺序排列。
+    /// 拿不到时为空，标签选择器退化成按目录顺序排——推荐是排序增强，不是必需品。
+    var tagSuggestions: [String: [String]] = [:]
 
-    static let demo = DeadlineCatalog(categories: DeadlineCategory.all, tags: DemoData.tags, subjects: DemoData.subjects)
+    static let demo = DeadlineCatalog(
+        categories: DeadlineCategory.all,
+        tags: DemoData.tags,
+        subjects: DemoData.subjects,
+        tagSuggestions: DemoData.tagSuggestions
+    )
+}
+
+enum TagSuggestions {
+    /// 某个分类 / 科目下推荐哪些标签，**按后端给的推荐顺序**返回。
+    /// Academics 选了科目就按科目找，其余按分类找，与 Calendar 网页的归属规则一致
+    /// （`public/app.js` 的 `suggestionOwnerId`）。
+    static func ids(in table: [String: [String]], category: DeadlineCategory, subject: DeadlineSubject?) -> [String] {
+        if category.kind == "academics", let subject { return table[subject.id] ?? [] }
+        return table[category.id] ?? []
+    }
 }
 
 enum RepositoryError: LocalizedError {
@@ -47,7 +66,12 @@ struct MockDeadlineRepository: DeadlineRepository {
     }
 
     func fetchCatalog() async throws -> DeadlineCatalog {
-        DeadlineCatalog.demo
+        DeadlineCatalog(
+            categories: DemoData.categories,
+            tags: DemoData.tags,
+            subjects: DemoData.subjects,
+            tagSuggestions: DemoData.tagSuggestions
+        )
     }
 
     func create(_ draft: DeadlineDraft) async throws -> Deadline {
@@ -103,6 +127,7 @@ enum DemoData {
         let categories: [Category]
         let subjects: [Subject]
         let tags: [Tag]
+        let tagSuggestions: [String: [String]]?
         let deadlines: [Item]
     }
 
@@ -137,6 +162,11 @@ enum DemoData {
     static var tags: [DeadlineTag] {
         guard let fixture else { return [] }
         return fixture.tags.map { .init(id: $0.id, name: $0.name) }
+    }
+
+    /// 与 `GET /api/category-tag-suggestions` 同构：键是分类 id 或科目 id。
+    static var tagSuggestions: [String: [String]] {
+        fixture?.tagSuggestions ?? [:]
     }
 
     static var deadlines: [Deadline] {

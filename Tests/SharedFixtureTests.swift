@@ -67,6 +67,77 @@ struct SharedFixtureTests {
         #expect(deadlines.contains { $0.allDay })
         #expect(deadlines.contains { $0.priority == .high })
         #expect(deadlines.contains { $0.subject != nil })
-        #expect(deadlines.allSatisfy { $0.tags.count <= 5 })
+        #expect(deadlines.allSatisfy { $0.tags.count <= DeadlineTag.maxPerDeadline })
+    }
+
+    /// 标签推荐也跟着 fixture 走，键必须是真实存在的分类 id 或科目 id、值必须是真实标签。
+    /// 键写错不会报错，只会让推荐悄悄消失，所以要有东西盯着。
+    @Test
+    func tagSuggestionsReferenceRealCatalogEntries() {
+        let suggestions = DemoData.tagSuggestions
+        #expect(!suggestions.isEmpty, "fixture 应当带标签推荐，否则演示模式验不到这个功能")
+
+        let ownerIDs = Set(DemoData.categories.map(\.id) + DemoData.subjects.map(\.id))
+        let tagIDs = Set(DemoData.tags.map(\.id))
+        for (owner, tags) in suggestions {
+            #expect(ownerIDs.contains(owner), "\(owner) 既不是分类 id 也不是科目 id")
+            #expect(tags.allSatisfy { tagIDs.contains($0) }, "\(owner) 推荐了目录外的标签")
+        }
+    }
+}
+
+/// 推荐标签的归属规则：Academics 选了科目按科目找，其余一律按分类找。
+/// 这条规则和 Calendar 网页共用一套语义，写错了只是推荐列表变空，界面不会报错。
+struct TagSuggestionOwnerTests {
+    private let academics = DeadlineCategory(id: "cat-academics", name: "Academics", colorHex: "#655f58", kind: "academics")
+    private let research = DeadlineCategory(id: "cat-research", name: "Research", colorHex: "#7f5fb5")
+    private let math = DeadlineSubject(id: "sub-math", name: "Math", categoryID: "cat-academics", colorHex: "#ff3b30")
+    private let table = ["cat-academics": ["tag-exam"], "cat-research": ["tag-writing"], "sub-math": ["tag-review", "tag-exam"]]
+
+    @Test
+    func academicsWithASubjectUsesTheSubjectListInOrder() {
+        #expect(TagSuggestions.ids(in: table, category: academics, subject: math) == ["tag-review", "tag-exam"])
+    }
+
+    @Test
+    func academicsWithoutASubjectFallsBackToTheCategoryList() {
+        #expect(TagSuggestions.ids(in: table, category: academics, subject: nil) == ["tag-exam"])
+    }
+
+    /// 普通分类即便带着一个残留的学科（切分类的瞬间可能出现），也只看分类。
+    @Test
+    func aNonAcademicsCategoryAlwaysUsesTheCategoryList() {
+        #expect(TagSuggestions.ids(in: table, category: research, subject: math) == ["tag-writing"])
+    }
+
+    @Test
+    func anUnknownOwnerYieldsNoSuggestions() {
+        let unknown = DeadlineCategory(id: "cat-nope", name: "Nope", colorHex: "#000000")
+        #expect(TagSuggestions.ids(in: table, category: unknown, subject: nil).isEmpty)
+    }
+}
+
+/// 标签上限是后端硬约束，客户端必须自己拦。界面上超出上限的按钮会被禁用，
+/// 这里守的是底层：任何调用路径都攒不出第 6 个标签。
+struct TagSelectionLimitTests {
+    private let catalog = (1...7).map { DeadlineTag(id: "tag-\($0)", name: "tag \($0)") }
+
+    @Test
+    func selectionStopsAtTheBackendLimit() {
+        var tags: [DeadlineTag] = []
+        for tag in catalog { tags.toggle(tag) }
+        #expect(tags.count == DeadlineTag.maxPerDeadline)
+        #expect(tags.map(\.id) == ["tag-1", "tag-2", "tag-3", "tag-4", "tag-5"])
+    }
+
+    /// 满了以后仍然要能取消，否则用户换不了标签，只能清空重来。
+    @Test
+    func deselectingAlwaysWorksEvenAtTheLimit() {
+        var tags = Array(catalog.prefix(DeadlineTag.maxPerDeadline))
+        tags.toggle(catalog[0])
+        #expect(tags.count == DeadlineTag.maxPerDeadline - 1)
+        tags.toggle(catalog[6])
+        #expect(tags.map(\.id).contains("tag-7"))
+        #expect(tags.count == DeadlineTag.maxPerDeadline)
     }
 }

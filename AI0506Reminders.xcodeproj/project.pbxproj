@@ -31,6 +31,7 @@
 		7230CA7E6EAF87807F855C67 /* DeadlineWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCFC3FC316F67AB1DB1CA101 /* DeadlineWidget.swift */; };
 		7A2E650D47AFEF9170EDFD83 /* DeadlineEditorSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFA2CA17B4F62CCE6ABFAD4A /* DeadlineEditorSheet.swift */; };
 		81CDEBB7ACB1035F9C2837D1 /* WidgetDeadlineSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0135C076F0C45DFEA95EEBA1 /* WidgetDeadlineSnapshot.swift */; };
+		8529B5AE06AD0CDA6EC13E9F /* CatalogPickers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35D3F218ABB4E9B496AA9541 /* CatalogPickers.swift */; };
 		8B0235177F92AA2ACD75CDB4 /* CourseHabits.swift in Sources */ = {isa = PBXBuildFile; fileRef = BED7D663EDA4C2495DE00F06 /* CourseHabits.swift */; };
 		8B51A2D12FE533BA15433797 /* CourseResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57E07302ED5E534F4C60D511 /* CourseResolverTests.swift */; };
 		8BBA568FF142621AB2F61C2E /* RoutingCandidateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 075815534FAAC13CAB1A7684 /* RoutingCandidateTests.swift */; };
@@ -97,6 +98,7 @@
 		32D05AD4E662DDDBF6172925 /* FoundationModelsPrompt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoundationModelsPrompt.swift; sourceTree = "<group>"; };
 		335146B56D0E07615B72EFE6 /* TimeZoneAnchorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeZoneAnchorTests.swift; sourceTree = "<group>"; };
 		33DDECDEC6BD60828DB50941 /* CalendarConnectionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarConnectionStore.swift; sourceTree = "<group>"; };
+		35D3F218ABB4E9B496AA9541 /* CatalogPickers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatalogPickers.swift; sourceTree = "<group>"; };
 		3C3B2D002EB5DA2012783CC2 /* DraftConfidenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DraftConfidenceTests.swift; sourceTree = "<group>"; };
 		3D99873A8EC9F56D547620AA /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		41A19AEB564D561745A49619 /* CourseContextBuilderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseContextBuilderTests.swift; sourceTree = "<group>"; };
@@ -139,6 +141,7 @@
 			children = (
 				93E685DCB9D343E5D4AEB7D5 /* AIComposerSheet.swift */,
 				2D4BFB8C053734F1C7E6D8E3 /* AppSettingsSheet.swift */,
+				35D3F218ABB4E9B496AA9541 /* CatalogPickers.swift */,
 				498730BAF37E618D2097465C /* ContentView.swift */,
 				BFA2CA17B4F62CCE6ABFAD4A /* DeadlineEditorSheet.swift */,
 			);
@@ -423,6 +426,7 @@
 				053204F8599FF3663DA7C489 /* AppSettingsSheet.swift in Sources */,
 				460976E2C02E3DC5D5FEC706 /* CalendarAPIRepository.swift in Sources */,
 				631595FBCA1BE41B04E209C0 /* CalendarConnectionStore.swift in Sources */,
+				8529B5AE06AD0CDA6EC13E9F /* CatalogPickers.swift in Sources */,
 				F9D0170A3976284793CD072C /* ContentView.swift in Sources */,
 				8FA2EF509CB0AC430C6E451D /* CourseContextBuilder.swift in Sources */,
 				8B0235177F92AA2ACD75CDB4 /* CourseHabits.swift in Sources */,
