@@ -12,10 +12,10 @@ enum MockAIDeadlineParser {
         let lower = cleaned.lowercased()
         let fallbackCategory = categories.first ?? DeadlineCategory.all[0]
         let category = matchingCategory(in: cleaned, lower: lower, categories: categories) ?? fallbackCategory
-        let selectedTags = tags.filter { lower.contains($0.name.lowercased()) || cleaned.contains($0.name) || tagAliases(for: $0).contains(where: { lower.contains($0) }) }
+        let selectedTags = LocalDraftRules.tags(in: cleaned, catalog: tags)
         let subject = matchingSubject(in: cleaned, lower: lower, subjects: subjects)
         let timing = dueTiming(in: cleaned, lower: lower, now: now)
-        let priority: DeadlinePriority = lower.contains("high") || lower.contains("urgent") || lower.contains("important") || cleaned.contains("重要") || cleaned.contains("高优先") ? .high : .default
+        let priority = LocalDraftRules.priority(for: cleaned)
         let title = title(from: cleaned)
 
         return AIParseResult(
@@ -79,18 +79,6 @@ enum MockAIDeadlineParser {
             (lower.contains("physics") || input.contains("物理")) && subject.name.localizedCaseInsensitiveContains("physics") ||
             (lower.contains("math") || input.contains("数学")) && subject.name.localizedCaseInsensitiveContains("math") ||
             (lower.contains("computer") || lower.contains("cs") || input.contains("计算机")) && (subject.name.localizedCaseInsensitiveContains("computer") || subject.name.localizedCaseInsensitiveContains("cs"))
-        }
-    }
-
-    /// 按标签**名字**匹配，不按 id。id 是后端生成的（可能是 "tag-exam"，也可能是 UUID），
-    /// 拿它做 key 在真实数据上一条都命中不了；名字才是用户会写进句子里的那个词。
-    private static func tagAliases(for tag: DeadlineTag) -> [String] {
-        switch tag.name.lowercased() {
-        case "exam": ["exam", "考试"]
-        case "urgent": ["urgent", "紧急"]
-        case "writing": ["writing", "写作"]
-        case "review": ["review", "复习"]
-        default: []
         }
     }
 

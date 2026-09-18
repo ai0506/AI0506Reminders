@@ -14,8 +14,10 @@
 		209C2E790C69A82AA4EFD61C /* FoundationModelsValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B1A7F2448D4920F2F4B0981 /* FoundationModelsValidatorTests.swift */; };
 		2BB57D5F5117DC040BDC67F0 /* RemindersRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9100E27396EAC44549AB4250 /* RemindersRoute.swift */; };
 		30CAF4085BF5E4BAFCB9295D /* CalendarAPIRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DBA3F61CCD82C7A0E81B2A9 /* CalendarAPIRepositoryTests.swift */; };
+		35C745C66042CFB532CB3A67 /* DraftConfidenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C3B2D002EB5DA2012783CC2 /* DraftConfidenceTests.swift */; };
 		39A2CE97377BF6A1210F2375 /* DeadlineOfflineCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = C047551A98A5FC433E3E433B /* DeadlineOfflineCache.swift */; };
 		3D45439F155F21112DA4D60F /* CourseContextBuilderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41A19AEB564D561745A49619 /* CourseContextBuilderTests.swift */; };
+		3DC9D838B064D2D2B7BA73A5 /* DraftConfidence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 546C602F048089137A552F19 /* DraftConfidence.swift */; };
 		460976E2C02E3DC5D5FEC706 /* CalendarAPIRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EDAFE8F959B61C62437F0EE /* CalendarAPIRepository.swift */; };
 		4AEE2AD6F2724A776B900C5D /* RemindersAppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B5BB8CB0469AE1E82F4602C /* RemindersAppDelegate.swift */; };
 		4AF6C7B0FAC24E4098873FEE /* TimeZoneAnchorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 335146B56D0E07615B72EFE6 /* TimeZoneAnchorTests.swift */; };
@@ -31,13 +33,17 @@
 		81CDEBB7ACB1035F9C2837D1 /* WidgetDeadlineSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0135C076F0C45DFEA95EEBA1 /* WidgetDeadlineSnapshot.swift */; };
 		8B0235177F92AA2ACD75CDB4 /* CourseHabits.swift in Sources */ = {isa = PBXBuildFile; fileRef = BED7D663EDA4C2495DE00F06 /* CourseHabits.swift */; };
 		8B51A2D12FE533BA15433797 /* CourseResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57E07302ED5E534F4C60D511 /* CourseResolverTests.swift */; };
+		8BBA568FF142621AB2F61C2E /* RoutingCandidateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 075815534FAAC13CAB1A7684 /* RoutingCandidateTests.swift */; };
 		8FA2EF509CB0AC430C6E451D /* CourseContextBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57FA385479E35F0058CD54E4 /* CourseContextBuilder.swift */; };
+		9194C5E17AFAE518075C8BE2 /* LocalDraftRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99029B10752D700B310E48EA /* LocalDraftRules.swift */; };
 		A4DACDC00F86F8D5E464C6F3 /* DeadlineRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = D34DD3ED22B1B50EA24887A1 /* DeadlineRepository.swift */; };
 		BFE330D8A9798457C50021FE /* Deadline.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC4C9170FF19D737AE67AFD6 /* Deadline.swift */; };
+		C003FC3648F9DB3DBE99DACD /* SemanticInterpretation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4263E036B8B273FBA7649C /* SemanticInterpretation.swift */; };
 		C0E671EAE9860E5F40E41C78 /* MockAIDeadlineParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 731A564AD60D2C50E60067A4 /* MockAIDeadlineParser.swift */; };
 		C169E0A2DE7B2FB57D95FA04 /* DeadlineNotificationScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5163A3E73B050CF76C625589 /* DeadlineNotificationScheduler.swift */; };
 		D2363C384B521738467C2610 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4279C6E999208AFF84D3688D /* DesignSystem.swift */; };
 		D3D867E57564CA89B72F8AE0 /* DeadlineStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A86714864F544D9BD9B9A98A /* DeadlineStore.swift */; };
+		D43AA6E81374F5A15A01C1AB /* RoutingCandidate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 202E7DA19D39572F42F4CF00 /* RoutingCandidate.swift */; };
 		EC659A6D889A28B095AE0BED /* AI0506RemindersWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 08DFFA1FFD1FDE5037A71B0F /* AI0506RemindersWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		F6A7A697C05DA043E1FC77F1 /* sample-workspace.json in Resources */ = {isa = PBXBuildFile; fileRef = E4E59B8C2560255F61882B05 /* sample-workspace.json */; };
 		F73C0A3C520462C24F9E1649 /* Deadline.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC4C9170FF19D737AE67AFD6 /* Deadline.swift */; };
@@ -80,21 +86,25 @@
 
 /* Begin PBXFileReference section */
 		0135C076F0C45DFEA95EEBA1 /* WidgetDeadlineSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetDeadlineSnapshot.swift; sourceTree = "<group>"; };
+		075815534FAAC13CAB1A7684 /* RoutingCandidateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutingCandidateTests.swift; sourceTree = "<group>"; };
 		08DFFA1FFD1FDE5037A71B0F /* AI0506RemindersWidgets.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = AI0506RemindersWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		0B5BB8CB0469AE1E82F4602C /* RemindersAppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemindersAppDelegate.swift; sourceTree = "<group>"; };
 		12176A406C3B0F3FAD23CC88 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		15A5424F19CFB8E5EC779FFB /* FoundationModelsDeadlineParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoundationModelsDeadlineParser.swift; sourceTree = "<group>"; };
 		1B1A7F2448D4920F2F4B0981 /* FoundationModelsValidatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoundationModelsValidatorTests.swift; sourceTree = "<group>"; };
+		202E7DA19D39572F42F4CF00 /* RoutingCandidate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutingCandidate.swift; sourceTree = "<group>"; };
 		2D4BFB8C053734F1C7E6D8E3 /* AppSettingsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettingsSheet.swift; sourceTree = "<group>"; };
 		32D05AD4E662DDDBF6172925 /* FoundationModelsPrompt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoundationModelsPrompt.swift; sourceTree = "<group>"; };
 		335146B56D0E07615B72EFE6 /* TimeZoneAnchorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeZoneAnchorTests.swift; sourceTree = "<group>"; };
 		33DDECDEC6BD60828DB50941 /* CalendarConnectionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarConnectionStore.swift; sourceTree = "<group>"; };
+		3C3B2D002EB5DA2012783CC2 /* DraftConfidenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DraftConfidenceTests.swift; sourceTree = "<group>"; };
 		3D99873A8EC9F56D547620AA /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		41A19AEB564D561745A49619 /* CourseContextBuilderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseContextBuilderTests.swift; sourceTree = "<group>"; };
 		4279C6E999208AFF84D3688D /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
 		46B55AEDB4B3CE4E874E68D7 /* CourseResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseResolver.swift; sourceTree = "<group>"; };
 		498730BAF37E618D2097465C /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		5163A3E73B050CF76C625589 /* DeadlineNotificationScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeadlineNotificationScheduler.swift; sourceTree = "<group>"; };
+		546C602F048089137A552F19 /* DraftConfidence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DraftConfidence.swift; sourceTree = "<group>"; };
 		57E07302ED5E534F4C60D511 /* CourseResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseResolverTests.swift; sourceTree = "<group>"; };
 		57FA385479E35F0058CD54E4 /* CourseContextBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseContextBuilder.swift; sourceTree = "<group>"; };
 		5DBA3F61CCD82C7A0E81B2A9 /* CalendarAPIRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarAPIRepositoryTests.swift; sourceTree = "<group>"; };
@@ -102,11 +112,13 @@
 		62E10B26A69FE8019ABB0204 /* AI0506RemindersApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AI0506RemindersApp.swift; sourceTree = "<group>"; };
 		673C787B2FF2ACBC34B4B9BB /* MockAIDeadlineParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockAIDeadlineParserTests.swift; sourceTree = "<group>"; };
 		731A564AD60D2C50E60067A4 /* MockAIDeadlineParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockAIDeadlineParser.swift; sourceTree = "<group>"; };
+		7E4263E036B8B273FBA7649C /* SemanticInterpretation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SemanticInterpretation.swift; sourceTree = "<group>"; };
 		888451A09353A865C81F3F2B /* Reminders.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Reminders.entitlements; sourceTree = "<group>"; };
 		8FB1308339D740AB07D06169 /* AI0506RemindersTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = AI0506RemindersTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		9100E27396EAC44549AB4250 /* RemindersRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemindersRoute.swift; sourceTree = "<group>"; };
 		93E685DCB9D343E5D4AEB7D5 /* AIComposerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIComposerSheet.swift; sourceTree = "<group>"; };
 		94A296E034BBDC5B0F479A91 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		99029B10752D700B310E48EA /* LocalDraftRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalDraftRules.swift; sourceTree = "<group>"; };
 		A23C523ED590F8F0849D6487 /* SharedFixtureTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedFixtureTests.swift; sourceTree = "<group>"; };
 		A86714864F544D9BD9B9A98A /* DeadlineStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeadlineStore.swift; sourceTree = "<group>"; };
 		B57A9A80720C57440B394852 /* FoundationModelsValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoundationModelsValidator.swift; sourceTree = "<group>"; };
@@ -200,10 +212,14 @@
 				5163A3E73B050CF76C625589 /* DeadlineNotificationScheduler.swift */,
 				C047551A98A5FC433E3E433B /* DeadlineOfflineCache.swift */,
 				D34DD3ED22B1B50EA24887A1 /* DeadlineRepository.swift */,
+				546C602F048089137A552F19 /* DraftConfidence.swift */,
 				15A5424F19CFB8E5EC779FFB /* FoundationModelsDeadlineParser.swift */,
 				32D05AD4E662DDDBF6172925 /* FoundationModelsPrompt.swift */,
 				B57A9A80720C57440B394852 /* FoundationModelsValidator.swift */,
+				99029B10752D700B310E48EA /* LocalDraftRules.swift */,
 				731A564AD60D2C50E60067A4 /* MockAIDeadlineParser.swift */,
+				202E7DA19D39572F42F4CF00 /* RoutingCandidate.swift */,
+				7E4263E036B8B273FBA7649C /* SemanticInterpretation.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -240,8 +256,10 @@
 				5DBA3F61CCD82C7A0E81B2A9 /* CalendarAPIRepositoryTests.swift */,
 				41A19AEB564D561745A49619 /* CourseContextBuilderTests.swift */,
 				57E07302ED5E534F4C60D511 /* CourseResolverTests.swift */,
+				3C3B2D002EB5DA2012783CC2 /* DraftConfidenceTests.swift */,
 				1B1A7F2448D4920F2F4B0981 /* FoundationModelsValidatorTests.swift */,
 				673C787B2FF2ACBC34B4B9BB /* MockAIDeadlineParserTests.swift */,
+				075815534FAAC13CAB1A7684 /* RoutingCandidateTests.swift */,
 				A23C523ED590F8F0849D6487 /* SharedFixtureTests.swift */,
 				335146B56D0E07615B72EFE6 /* TimeZoneAnchorTests.swift */,
 			);
@@ -387,8 +405,10 @@
 				30CAF4085BF5E4BAFCB9295D /* CalendarAPIRepositoryTests.swift in Sources */,
 				3D45439F155F21112DA4D60F /* CourseContextBuilderTests.swift in Sources */,
 				8B51A2D12FE533BA15433797 /* CourseResolverTests.swift in Sources */,
+				35C745C66042CFB532CB3A67 /* DraftConfidenceTests.swift in Sources */,
 				209C2E790C69A82AA4EFD61C /* FoundationModelsValidatorTests.swift in Sources */,
 				188E760DF7332E728383DF7D /* MockAIDeadlineParserTests.swift in Sources */,
+				8BBA568FF142621AB2F61C2E /* RoutingCandidateTests.swift in Sources */,
 				5DC99AFB5E10103432C85ACE /* SharedFixtureTests.swift in Sources */,
 				4AF6C7B0FAC24E4098873FEE /* TimeZoneAnchorTests.swift in Sources */,
 			);
@@ -414,12 +434,16 @@
 				A4DACDC00F86F8D5E464C6F3 /* DeadlineRepository.swift in Sources */,
 				D3D867E57564CA89B72F8AE0 /* DeadlineStore.swift in Sources */,
 				D2363C384B521738467C2610 /* DesignSystem.swift in Sources */,
+				3DC9D838B064D2D2B7BA73A5 /* DraftConfidence.swift in Sources */,
 				5B88D119EDE191FD067CAB85 /* FoundationModelsDeadlineParser.swift in Sources */,
 				FD40B325ED449ACEF4A7C661 /* FoundationModelsPrompt.swift in Sources */,
 				7214E871C807DE57E29F18C7 /* FoundationModelsValidator.swift in Sources */,
+				9194C5E17AFAE518075C8BE2 /* LocalDraftRules.swift in Sources */,
 				C0E671EAE9860E5F40E41C78 /* MockAIDeadlineParser.swift in Sources */,
 				4AEE2AD6F2724A776B900C5D /* RemindersAppDelegate.swift in Sources */,
 				2BB57D5F5117DC040BDC67F0 /* RemindersRoute.swift in Sources */,
+				D43AA6E81374F5A15A01C1AB /* RoutingCandidate.swift in Sources */,
+				C003FC3648F9DB3DBE99DACD /* SemanticInterpretation.swift in Sources */,
 				F9EE66BB161065E902DC8BC3 /* WidgetDeadlineSnapshot.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
