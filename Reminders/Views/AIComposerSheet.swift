@@ -44,6 +44,8 @@ struct AIComposerSheet: View {
             }
         }
         .presentationDetents([.large])
+        // 用户打字的这几秒正好用来加载模型，别等他点「分析这段话」才开始。
+        .task { store.prewarmAI() }
     }
 
     private var stepTitle: String {
@@ -56,6 +58,15 @@ struct AIComposerSheet: View {
 
     private var trimmedPrompt: String {
         prompt.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// 这行字是隐私承诺，必须说实话：接上设备端模型之后「不会发送 AI 请求」
+    /// 已经不成立了，但推理仍在这台 iPad 上完成，内容不离开设备——
+    /// 对用户来说后者才是真正关心的那件事。
+    private var privacyNote: String {
+        store.isOnDeviceModelAvailable
+            ? "设备端 Apple 智能 · 内容不离开这台 iPad"
+            : "本地规则解析 · 内容不离开这台 iPad"
     }
 
     // MARK: - 第一步：写下要做的事
@@ -77,7 +88,7 @@ struct AIComposerSheet: View {
 
                 HStack(spacing: 7) {
                     Image(systemName: "wand.and.stars")
-                    Text("本地演示解析 · 不会发送 AI 请求")
+                    Text(privacyNote)
                 }
                 .font(.footnote)
                 .foregroundStyle(.secondary)
@@ -105,7 +116,7 @@ struct AIComposerSheet: View {
                 // 动画不是唯一的状态来源：文字始终说明现在在做什么。
                 Text("正在分析这段话…")
                     .font(.headline)
-                Text("本地演示解析 · 不会发送 AI 请求")
+                Text(privacyNote)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
@@ -137,6 +148,15 @@ struct AIComposerSheet: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
                 if let result {
+                    if let note = store.aiNote {
+                        // 回退发生时要说出来：草稿的质量确实不一样，
+                        // 不说的话用户会以为设备端模型就是这个水平。
+                        Label(note, systemImage: "info.circle")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+
                     originalTextCard(result.originalText)
 
                     AIDraftEditor(
@@ -220,7 +240,7 @@ struct AIComposerSheet: View {
             phase = .parsing
         }
         parseTask = Task {
-            let parsed = await store.parseMockAI(text)
+            let parsed = await store.parseAI(text)
             revealTask?.cancel()
             revealTask = nil
             guard !Task.isCancelled else { return }

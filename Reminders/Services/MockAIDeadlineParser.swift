@@ -34,6 +34,21 @@ enum MockAIDeadlineParser {
         )
     }
 
+    /// 时间解析的复用入口。
+    ///
+    /// `FoundationModelsDeadlineParser` 刻意不让模型读日期——实测端侧模型会把
+    /// prompt 里的「Now: Friday 16:50」当成答案抄走（"明天下午三点" 解出 16 点、
+    /// 五个用例的星期全塌缩成 Friday）。这里的正则是确定性的，中英文都覆盖，
+    /// 比模型准得多，所以两个解析器共用同一套时间判断。
+    static func timing(in input: String, now: Date = .now) -> (date: Date, isAllDay: Bool, wasExplicit: Bool) {
+        dueTiming(in: input, lower: input.lowercased(), now: now)
+    }
+
+    /// 标题提炼的复用入口：模型没给出标题时的兜底。
+    static func fallbackTitle(from input: String) -> String {
+        title(from: input)
+    }
+
     private static func matchingCategory(in input: String, lower: String, categories: [DeadlineCategory]) -> DeadlineCategory? {
         if let exact = categories.first(where: { lower.contains($0.name.lowercased()) || input.contains($0.name) }) { return exact }
         if lower.contains("research") || input.contains("研究") {

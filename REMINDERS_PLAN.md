@@ -11,15 +11,15 @@
 | iPad 界面 | Today / Upcoming / Overdue / All / 分类与标签导航、横屏三栏、详情、稳定的创建与 AI 入口；浅色与深色模式均已在模拟器检查 | 真机上补 Dynamic Type、键盘与 Apple Pencil 专项验收 |
 | Deadline 操作 | 演示仓库的创建、完成、重开；真实 API 的 `GET`、`POST`、`complete`、`reopen` transport；分类与标签目录从 Calendar API 拉取 | 需要实际 Calendar API 地址与 bearer token 才能做端到端验证 |
 | Calendar 连接 | 设置页输入 API 根地址；token 只存 iPad Keychain；成功请求后才保存 | 当前没有在代码或文档中写入任何真实 token |
-| 模拟 AI | 本地模拟解析与可编辑 Title / Category / Due / Priority / All-day / Tags / Notes，确认后创建 | 真实 AI 仍待后端 Proxy，不会把 API Key 放进 iPad App |
+| 设备端 AI | Apple Foundation Models 解析标题 / 分类 / 学科 / 标签 / 优先级，日期时间仍走正则；输出经校验与一次重试，失败回退规则解析；草稿可编辑后确认创建 | 课程归属（`course_id`）尚未接进提示词；真机与真实 Calendar 目录下的质量未验收 |
 | 本地提醒 | 用户主动开启后申请权限；定时项提前 15 分钟、全天项当天 09:00；最多安排 48 个未来任务；点击通知会路由到对应 Deadline | 尚未在真机授权状态下验收 |
 | Widget | App Group 快照、small/medium Today Widget、App 数据变化后刷新 timeline、点击后路由到对应 Deadline | 当前显示今日数量和最近一项；多项 Widget 仍待补充 |
 | 课程上下文 | `Deadline.courseID`、`GET /api/course-catalog`、`GET /api/course-schedule`、无日期窗口的未完成 Deadline 读取，以及纯函数的 `CourseContextBuilder`（唯一完整课程名直接命中；否则取当天已下课的课，按最近结束去重取三门，各带未完成作业 metadata 与下次上课时间） | 尚未接入界面与设备端模型；候选还没有任何消费方，`course_id` 目前恒为 nil。下一步是 Foundation Models 草稿（见 `CALENDAR_COURSE_DEADLINE_CONTEXT_REQUIREMENTS.md` §5） |
 | 缓存 | SwiftData 保存真实 Calendar Deadline，冷启动先显示缓存、联网成功后替换；App Group `UserDefaults` 供 Widget 使用 | 需要真实后端断网/恢复网络测试 |
 
-已在 iPad Pro 11-inch 模拟器验证：横屏浅色/深色三栏主界面、竖屏侧栏自动收起后的列表+详情双栏、分类和标签筛选与详情同步、设置页、AI 解析后的可编辑字段、AI 创建后的详情显示、完成/重开状态切换，以及 URL Scheme 跳转到指定 Deadline。Debug 构建已通过。真实 Calendar 后端、通知授权、Widget 添加到主屏幕和 2021 真机性能仍不能在没有用户凭据与设备连接的情况下宣称已验收。
+已在 iPad Pro 11-inch 模拟器验证：横屏浅色/深色三栏主界面、竖屏侧栏自动收起后的列表+详情双栏、分类和标签筛选与详情同步、设置页、AI 解析后的可编辑字段、AI 创建后的详情显示、完成/重开状态切换，以及 URL Scheme 跳转到指定 Deadline。Debug 构建已通过。真实 Calendar 后端、通知授权、Widget 添加到主屏幕和 M5 真机性能仍不能在没有用户凭据与设备连接的情况下宣称已验收。
 
-自动化验证：`AI0506RemindersTests` 在 iPad Pro 11-inch (M5) 模拟器通过 38/38，覆盖中文与英文自然语言解析、Deadline URL 路由、Calendar API transport（含课程目录、课表投影、无窗口的未完成读取与 `course_id` 写入）、目录回填、共用假数据一致性，以及课程候选构建。模拟解析只在设备本地运行，不会发送用户输入或调用任何 AI API。
+自动化验证：`AI0506RemindersTests` 在 iPad Pro 11-inch (M5) 模拟器通过 53/53，覆盖中文与英文自然语言解析、Deadline URL 路由、Calendar API transport（含课程目录、课表投影、无窗口的未完成读取与 `course_id` 写入）、目录回填、共用假数据一致性，以及课程候选构建。解析全部在设备上完成：Foundation Models 是端侧模型，规则解析是纯本地计算，两条路径都不发送用户输入到任何服务器。
 
 ## 1. 项目定位
 
@@ -59,7 +59,7 @@
 
 主要目标设备：
 
-- 11 英寸 iPad Pro（2021 年款）
+- 11 英寸 iPad Pro（2025 年款，M5）
 - iPadOS 26.6.1
 
 体验目标：

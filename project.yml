@@ -2,7 +2,7 @@ name: AI0506Reminders
 options:
   bundleIdPrefix: com.ai0506
   deploymentTarget:
-    iOS: "18.0"
+    iOS: "26.0"
 settings:
   base:
     SWIFT_VERSION: "6.0"

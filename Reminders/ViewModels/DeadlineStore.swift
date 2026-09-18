@@ -25,6 +25,9 @@ final class DeadlineStore {
     /// 那个会把真实数据覆盖成演示数据，而且此时 `isDemoMode` 已经是 false，
     /// 演示数据还会被写进真实的离线缓存。
     private var refreshGeneration = 0
+    private let aiParser = FoundationModelsDeadlineParser()
+    /// 模型不可用或这次回退到本地规则时给用户的一句说明；正常走通时为 nil。
+    var aiNote: String?
 
     init(repository: any DeadlineRepository, offlineCache: DeadlineOfflineCache = .shared) {
         self.repository = repository
@@ -156,10 +159,39 @@ final class DeadlineStore {
         }
     }
 
-    func parseMockAI(_ input: String) async -> AIParseResult {
-        // 解析本身是纯本地计算，没有理由等。这一步的可见时长由 AIComposerSheet
-        // 的最短停留控制，不在这里人造延迟。
-        return MockAIDeadlineParser.parse(input: input, categories: categories, tags: availableTags, subjects: subjects)
+    /// AI 面板出现时就调，别等用户点「分析这段话」。
+    /// 首次推理要加载模型，那段成本正好用用户打字的几秒吃掉。
+    func prewarmAI() {
+        aiParser.prewarm()
+    }
+
+    /// 设备端模型优先，失败一律回退到本地规则解析。
+    ///
+    /// 回退不是可有可无的兜底：Apple 智能可能没开、模型可能还在下载、端侧护栏
+    /// 也可能对正常输入误触发。这些情况下用户点了「分析」总得看到一份草稿，
+    /// 而不是一个错误弹窗——`MockAIDeadlineParser` 至少能解出时间和标题。
+    func parseAI(_ input: String) async -> AIParseResult {
+        aiNote = nil
+        do {
+            return try await aiParser.parse(
+                input: input,
+                categories: categories,
+                tags: availableTags,
+                subjects: subjects
+            )
+        } catch {
+            if let unavailable = error as? FoundationModelsDeadlineParser.Unavailable {
+                aiNote = unavailable.message
+            } else {
+                aiNote = "设备端模型这次没能给出结果，已改用本地规则解析。"
+            }
+            return MockAIDeadlineParser.parse(input: input, categories: categories, tags: availableTags, subjects: subjects)
+        }
+    }
+
+    /// 设备端模型此刻是否可用，决定 AI 面板上那行隐私说明的措辞。
+    var isOnDeviceModelAvailable: Bool {
+        FoundationModelsDeadlineParser.availability == nil
     }
 
     /// 连接必须自己发一次请求并让错误抛出来。
