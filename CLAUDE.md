@@ -153,6 +153,20 @@ subject_id、标签不超 5 个），`SharedFixtureTests` 会盯着 `DeadlineCat
 
 `YYMMDDHHmm` 是当前时间（两位年月日时分），与现有条目格式一致。写清楚**改了什么、为什么、验证了什么、什么没做到**。这个仓库的变更记录是技术性的，不是流水账；不要留「文件已更新」这类没有信息量的行。
 
+## 跨项目改动
+
+一次改动同时动到另一个项目（基本都是 Calendar）时，**两边的 `updates.md` 都要记**，用前缀标出方向：
+
+| 记在哪 | 前缀 |
+|---|---|
+| 本仓库 `updates.md` | `[ClaudeCode to Calendar][YYMMDDHHmm]` |
+| `../Calendar/updates.md` | `[ClaudeCode from Reminders][YYMMDDHHMMSS]` |
+
+时间戳沿用各自仓库的既有格式：Reminders 到分钟（10 位），Calendar 到秒（12 位）。
+
+这样在任一侧翻变更记录，都能看出「这次改动还牵动了另一个仓库」，不会只看到半截。
+对面仓库的提交和推送同样要先问过用户。
+
 ## 禁止事项
 
 - 不把 token、API 地址或任何凭据写进仓库里的任何文件。
