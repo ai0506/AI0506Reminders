@@ -41,3 +41,7 @@
 校验分级都是实测调出来的，注释里记着为什么那样写。改之前读 `CLAUDE.md` 的〈Foundation Models〉
 一节——尤其是「不要为单个用例调提示词」和「改了提示词要跑真实回归集」这两条，
 这个项目在这上面栽过。
+
+回归集怎么跑见 `Scripts/ai-probe/README.md`：`swift Scripts/ai-probe/probe.swift`。
+**数据集是私有的，放在仓库外**（真实 Deadline 标题、真实课表、一位教师的姓名），
+跑出来的失败行同样不要贴进 `updates.md`、提交信息或 issue——写分数和结论就够了。

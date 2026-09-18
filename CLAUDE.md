@@ -87,6 +87,7 @@ xcodebuild -project AI0506Reminders.xcodeproj -scheme AI0506Reminders -destinati
 | `Tests/` | Swift Testing 用例。 |
 | `Reminders/Resources/sample-workspace.json` | **与 Calendar 共用的假数据**，权威副本在 Calendar 仓库，这里是 vendored 拷贝。 |
 | `Scripts/sync-fixtures.sh` | 从 `../Calendar/fixtures/` 拉取上面那份。 |
+| `Scripts/ai-probe/` | 设备端模型的回归探针。改提示词后必跑，数据集在仓库外。 |
 
 ## 开发原则
 
@@ -183,8 +184,10 @@ few-shot 给最高优先级、标签定义写足边界和反例。
 2. 跑 `test`，Swift Testing 用例必须全绿。
 3. 改了界面：在 iPad Pro 11-inch 模拟器里**浅色和深色各看一遍**，并按 `Frontend_spec.md` §20 的清单过一遍相关项。横竖屏都要转一次。
 4. 改了 Widget 或通知：在模拟器里实际触发一次，不要只看代码。
-5. 改了 AI 提示词或校验规则：**跑真实回归集**，别只看一两个例子好不好。做法见上面
-   〈Foundation Models〉那条——单元测试挡不住提示词的语义漂移，它只能挡住结构问题。
+5. 改了 AI 提示词或校验规则：**跑真实回归集**——`swift Scripts/ai-probe/probe.swift`，
+   用法与数据集位置见 `Scripts/ai-probe/README.md`。单元测试挡不住提示词的语义漂移，
+   它只能挡住结构问题。回归集是私有的（真实标题、课表、教师姓名），放在仓库外，
+   跑出来的失败行也不要贴进 `updates.md` 或提交信息，写分数和结论就够了。
 6. 往 `updates.md` 追加一条（见下）。
 7. 事实变了就同步 `Frontend_spec.md`（尤其 §22 技术债表）和 `REMINDERS_PLAN.md` 的状态表。
 
