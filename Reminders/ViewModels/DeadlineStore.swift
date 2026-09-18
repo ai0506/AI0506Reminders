@@ -53,7 +53,7 @@ final class DeadlineStore {
 
     var visibleDeadlines: [Deadline] {
         let now = Date()
-        let calendar = Calendar.current
+        let calendar = Calendar.shanghai
         let filter = selectedFilter ?? .today
         return deadlines.filter { deadline in
             switch filter {
@@ -79,7 +79,7 @@ final class DeadlineStore {
     }
 
     var groups: [DeadlineGroup] {
-        let calendar = Calendar.current
+        let calendar = Calendar.shanghai
         let groups = Dictionary(grouping: visibleDeadlines) { calendar.startOfDay(for: $0.dueDate) }
         return groups.keys.sorted().map { date in
             let title: String

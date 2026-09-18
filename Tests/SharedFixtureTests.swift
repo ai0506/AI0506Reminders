@@ -58,7 +58,9 @@ struct SharedFixtureTests {
     @Test
     func demoDataCoversEveryStatusTheUICanShow() {
         let deadlines = DemoData.deadlines
-        let calendar = Calendar.current
+        // 演示数据是按上海时区的「今天」摆的，断言也得用同一把尺子；
+        // 用 Calendar.current 的话，换个地区跑就会有一条测试无缘无故变红。
+        let calendar = Calendar.shanghai
         #expect(deadlines.contains { calendar.isDateInToday($0.dueDate) })
         #expect(deadlines.contains { $0.isCompleted })
         #expect(deadlines.contains { $0.isOverdue && !$0.isCompleted })

@@ -1,6 +1,21 @@
 import Foundation
 import SwiftUI
 
+extension Calendar {
+    /// 项目里判「今天」「明天」「逾期」和一切相对日期的唯一时区锚点。
+    ///
+    /// 后端就是按 Asia/Shanghai 定义这些概念的（见 `CLAUDE.md`），跟着设备时区走的话，
+    /// 人换个地区、或模拟器地区不是中国，「明天」就会落到错误的自然日上。实测过一次：
+    /// 设备设成洛杉矶时，「周五下午三点」被算到了周六。
+    ///
+    /// 放在 Models 里是因为 Widget target 也编译这个目录，两边必须用同一把尺子。
+    static let shanghai: Calendar = {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "Asia/Shanghai") ?? .current
+        return calendar
+    }()
+}
+
 enum DeadlinePriority: String, Codable, CaseIterable, Identifiable {
     case high
     case `default`

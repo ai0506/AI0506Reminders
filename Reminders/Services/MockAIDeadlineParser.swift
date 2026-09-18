@@ -94,8 +94,9 @@ enum MockAIDeadlineParser {
         }
     }
 
+    /// 相对日期一律按 `Calendar.shanghai` 算，不跟设备时区走。理由见那个常量上的注释。
     private static func dueTiming(in input: String, lower: String, now: Date) -> (date: Date, isAllDay: Bool, wasExplicit: Bool) {
-        let calendar = Calendar.current
+        let calendar = Calendar.shanghai
         let baseDay: Date
         if input.contains("明天") || lower.contains("tomorrow") {
             baseDay = calendar.date(byAdding: .day, value: 1, to: now) ?? now

@@ -18,6 +18,7 @@
 		3D45439F155F21112DA4D60F /* CourseContextBuilderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41A19AEB564D561745A49619 /* CourseContextBuilderTests.swift */; };
 		460976E2C02E3DC5D5FEC706 /* CalendarAPIRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EDAFE8F959B61C62437F0EE /* CalendarAPIRepository.swift */; };
 		4AEE2AD6F2724A776B900C5D /* RemindersAppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B5BB8CB0469AE1E82F4602C /* RemindersAppDelegate.swift */; };
+		4AF6C7B0FAC24E4098873FEE /* TimeZoneAnchorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 335146B56D0E07615B72EFE6 /* TimeZoneAnchorTests.swift */; };
 		52DC82BBA41A979DEF7168C9 /* RemindersRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9100E27396EAC44549AB4250 /* RemindersRoute.swift */; };
 		567F34B9727D1320887329D6 /* AI0506RemindersApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62E10B26A69FE8019ABB0204 /* AI0506RemindersApp.swift */; };
 		5A495E5E8DA2918EB307AE66 /* CourseResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46B55AEDB4B3CE4E874E68D7 /* CourseResolver.swift */; };
@@ -86,6 +87,7 @@
 		1B1A7F2448D4920F2F4B0981 /* FoundationModelsValidatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoundationModelsValidatorTests.swift; sourceTree = "<group>"; };
 		2D4BFB8C053734F1C7E6D8E3 /* AppSettingsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettingsSheet.swift; sourceTree = "<group>"; };
 		32D05AD4E662DDDBF6172925 /* FoundationModelsPrompt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoundationModelsPrompt.swift; sourceTree = "<group>"; };
+		335146B56D0E07615B72EFE6 /* TimeZoneAnchorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeZoneAnchorTests.swift; sourceTree = "<group>"; };
 		33DDECDEC6BD60828DB50941 /* CalendarConnectionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarConnectionStore.swift; sourceTree = "<group>"; };
 		3D99873A8EC9F56D547620AA /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		41A19AEB564D561745A49619 /* CourseContextBuilderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseContextBuilderTests.swift; sourceTree = "<group>"; };
@@ -241,6 +243,7 @@
 				1B1A7F2448D4920F2F4B0981 /* FoundationModelsValidatorTests.swift */,
 				673C787B2FF2ACBC34B4B9BB /* MockAIDeadlineParserTests.swift */,
 				A23C523ED590F8F0849D6487 /* SharedFixtureTests.swift */,
+				335146B56D0E07615B72EFE6 /* TimeZoneAnchorTests.swift */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -387,6 +390,7 @@
 				209C2E790C69A82AA4EFD61C /* FoundationModelsValidatorTests.swift in Sources */,
 				188E760DF7332E728383DF7D /* MockAIDeadlineParserTests.swift in Sources */,
 				5DC99AFB5E10103432C85ACE /* SharedFixtureTests.swift in Sources */,
+				4AF6C7B0FAC24E4098873FEE /* TimeZoneAnchorTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

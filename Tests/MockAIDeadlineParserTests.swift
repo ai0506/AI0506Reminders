@@ -3,6 +3,7 @@ import Testing
 @testable import AI0506_Reminders
 
 struct MockAIDeadlineParserTests {
+    private let shanghai = Calendar.shanghai
     private let categories = DeadlineCatalog.demo.categories
     private let tags = DeadlineCatalog.demo.tags
     private let subjects = DeadlineCatalog.demo.subjects
@@ -22,8 +23,8 @@ struct MockAIDeadlineParserTests {
         #expect(result.draft.tags.map(\.name) == ["exam", "urgent"])
         #expect(result.draft.priority == .high)
         #expect(!result.draft.allDay)
-        #expect(Calendar.current.component(.weekday, from: result.draft.dueDate) == 6)
-        #expect(Calendar.current.component(.hour, from: result.draft.dueDate) == 15)
+        #expect(shanghai.component(.weekday, from: result.draft.dueDate) == 6)
+        #expect(shanghai.component(.hour, from: result.draft.dueDate) == 15)
     }
 
     @Test
@@ -40,7 +41,7 @@ struct MockAIDeadlineParserTests {
         #expect(result.draft.category.name == "Research")
         #expect(result.draft.priority == .high)
         #expect(!result.draft.allDay)
-        #expect(Calendar.current.component(.hour, from: result.draft.dueDate) == 16)
+        #expect(shanghai.component(.hour, from: result.draft.dueDate) == 16)
     }
 
     @Test
@@ -71,9 +72,7 @@ struct MockAIDeadlineParserTests {
     }
 
     private func date(year: Int, month: Int, day: Int, hour: Int) -> Date? {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(identifier: "Asia/Shanghai") ?? .current
-        return calendar.date(from: DateComponents(year: year, month: month, day: day, hour: hour))
+        shanghai.date(from: DateComponents(year: year, month: month, day: day, hour: hour))
     }
 }
 
