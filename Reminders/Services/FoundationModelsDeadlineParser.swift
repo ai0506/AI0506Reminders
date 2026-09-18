@@ -10,8 +10,13 @@ import FoundationModels
 ///
 /// 模型永远不接触 id：分类、学科、标签一律用**名字**回传。编一个不存在的 id
 /// 我们无从分辨真假，编一个不在清单里的名字一眼就能查出来。
-@MainActor
-final class FoundationModelsDeadlineParser {
+/// **这是个 actor，不是 `@MainActor` 类。**
+///
+/// 之前它挂在主 actor 上，于是端侧推理那几秒都占着主线程：界面冻住，用户点
+/// 「取消」「关闭」没有反应，连点几次之后等推理结束才一起生效——真机上的表现
+/// 就是「按很多次才能关掉窗口」。Mac 上快到察觉不出，所以模拟器复现不了。
+/// 推理必须离开主线程，界面才有资格在它跑的时候响应。
+actor FoundationModelsDeadlineParser {
     /// 端侧模型编造清单外名字的概率不低（探针里 7 个用例有 3 个编了标签名），
     /// 所以校验不是可选优化。但重试一次就要多等一轮推理，超过一次用户会觉得卡。
     static let maxRetries = 1
@@ -36,7 +41,7 @@ final class FoundationModelsDeadlineParser {
     /// 只用来预热模型权重，不参与真正的解析（解析每次开新的，见 `parse`）。
     private var warmupSession: LanguageModelSession?
 
-    static var availability: Unavailable? {
+    nonisolated static var availability: Unavailable? {
         switch SystemLanguageModel.default.availability {
         case .available: nil
         case .unavailable(.deviceNotEligible): .deviceNotEligible
@@ -144,13 +149,26 @@ final class FoundationModelsDeadlineParser {
         // 后端硬约束：非 academics 分类下 subject_id 与 course_id 必须为空，否则 400。
         let isAcademic = category.kind == "academics"
 
+        // 「下节课交」是能算出来的：课表里就有那门课的下一次上课。
+        // 推不出课程、或者课表里没有下一节时，保持时间正则的结果不变——
+        // 宁可留一个明显不对的默认日期让用户改，也不要编一个看着像真的时刻。
+        var dueDate = timing.date
+        var allDay = timing.isAllDay
+        if NextLessonMarkers.matches(input),
+           let next = Self.nextOccurrence(of: resolution.course, in: courseContext) {
+            dueDate = next.start
+            allDay = false
+        }
+
         return AIParseResult(
             originalText: input.trimmingCharacters(in: .whitespacesAndNewlines),
             draft: DeadlineDraft(
                 title: title.isEmpty ? "新建截止事项" : title,
-                detail: "",
-                dueDate: timing.date,
-                allDay: timing.isAllDay,
+                // 页码写进备注：那是作业内容本身，只留在原文里的话，
+                // 过两天打开这条 Deadline 就不知道要做哪几页了。
+                detail: PageNumbers.note(from: input) ?? "",
+                dueDate: dueDate,
+                allDay: allDay,
                 category: category,
                 subject: isAcademic ? subject : nil,
                 courseID: isAcademic ? resolution.course?.id : nil,
@@ -163,5 +181,22 @@ final class FoundationModelsDeadlineParser {
             courseName: isAcademic ? resolution.course?.name : nil,
             courseBasis: isAcademic ? resolution.basis?.explanation : nil
         )
+    }
+
+    /// 这门课在课表里的下一次上课。候选是按课程建的，所以只认对得上 id 的那一条——
+    /// 拿另一门课的上课时间当截止时间，比没有时间更糟。
+    ///
+    /// `nonisolated` 是因为这是个纯函数：整个类挂在 MainActor 上只是为了模型调用，
+    /// 这条规则跟 actor 无关，不解除隔离的话测试连调都调不了。
+    nonisolated static func nextOccurrence(of course: Course?, in context: CourseContext) -> CourseOccurrence? {
+        guard let course else { return nil }
+        switch context {
+        case .direct(let candidate):
+            return candidate.course.id == course.id ? candidate.nextOccurrence : nil
+        case .contextual(let candidates):
+            return candidates.first { $0.course.id == course.id }?.nextOccurrence
+        case .none:
+            return nil
+        }
     }
 }

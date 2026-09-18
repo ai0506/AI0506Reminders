@@ -22,7 +22,8 @@ enum MockAIDeadlineParser {
             originalText: cleaned,
             draft: DeadlineDraft(
                 title: title.isEmpty ? "新建截止事项" : title,
-                detail: "根据你的输入在本地生成。请在创建前检查并调整。",
+                // 页码和设备端那条路径走同一个规则：回退时也不能把作业内容丢了。
+                detail: PageNumbers.note(from: cleaned) ?? "根据你的输入在本地生成。请在创建前检查并调整。",
                 dueDate: timing.date,
                 allDay: timing.isAllDay,
                 category: category,

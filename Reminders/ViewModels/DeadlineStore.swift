@@ -173,7 +173,9 @@ final class DeadlineStore {
     /// 首次推理要加载模型，那段成本正好用用户打字的几秒吃掉；课程上下文也一并在
     /// 这段时间里取回来，免得解析时再等三个请求。
     func prewarmAI() {
-        aiParser.prewarm()
+        // 两个独立的 Task，不要串在一起：预热是模型侧的事，取课程上下文是网络的事，
+        // 谁也不该等谁。解析器现在是 actor，预热调用要 await 才能进去。
+        Task { await aiParser.prewarm() }
         Task { await loadCourseContext() }
     }
 

@@ -126,6 +126,13 @@ xcodebuild -project AI0506Reminders.xcodeproj -scheme AI0506Reminders -destinati
 
 **新加的 `List` / `Form` 必须调 `.reminderCanvas()`。** 否则 UIKit 的默认画布在深色模式下回落成浅色不透明背景，文字不可读。这个修饰符同时隐藏滚动背景、铺 `paper`、设 `ink` 前景，三件事缺一不可。自定义行背景还要显式 `.listRowBackground(RemindersTheme.card)`。
 
+**`Binding` 的 `get` 不要捕获 `if let` 解包出来的快照。** 写成
+`if let result { Child(result: Binding(get: { result }, set: { self.result = $0 })) }`
+看着没问题，但 `get` 捕获的是**那一刻的值**。SwiftUI 在同一个事件里不重算 body，
+所以子视图连着改两个字段时，第二次 `get()` 拿到的还是旧值，写回就把第一次的修改盖掉了。
+真机上的症状是「点了没反应」——「清除课程」要清三个字段，全被盖回去。
+`get` 里读 `self.xxx`，另外多字段的清除合成一次写入。
+
 **`Form` 行里放多个自定义按钮，每个都要 `.buttonStyle(.borderless)`。** 不然 SwiftUI 把整行合并成一个行级操作——点任意一个标签会把整行所有标签一起切换。`TagPicker` 就是这么踩过一次。
 
 **后端返回的 Deadline 没有可用的分类 id。** `CalendarAPIRepository.DeadlineDTO.model` 把 category id 硬编码成 `"uncatalogued"`，真正的 id 靠 `DeadlineStore.applyCatalog` 用**分类名**回填。所以：分类一旦在 Calendar 侧被归档（`GET /api/categories` 就不返回它了），回填失败，那条 Deadline 会在所有分类筛选下消失。科目同理——`GET /api/subjects` 只返回 `active = 1` 的。动这块之前先想清楚归档 / 停用数据怎么办。
@@ -161,6 +168,11 @@ subject_id、标签不超 5 个），`SharedFixtureTests` 会盯着 `DeadlineCat
 ### Foundation Models
 
 下面这些都是实测撞出来的，不是文档里读来的。改 AI 相关代码前先看一遍。
+
+**`FoundationModelsDeadlineParser` 是 actor，不要改回 `@MainActor`。** 挂在主 actor 上时，
+端侧推理那几秒占着主线程，界面冻住、点击被丢掉——真机上的表现是「关闭 / 取消要按很多次
+才关得掉窗口」，而那两个按钮正好都是解析过程中会按的。Mac 快到察觉不出，**模拟器复现不了
+这个问题**，别因为模拟器上一次就能关掉就以为没事。
 
 **每次解析都要新建 `LanguageModelSession`。** 它是有状态的：每轮问答都留在 transcript 里，
 下次请求连历史一起送。而上下文窗口只有 **4096 token 且连输出一起算**。让 parser 长期持有

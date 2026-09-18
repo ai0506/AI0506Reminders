@@ -159,8 +159,14 @@ struct AIComposerSheet: View {
 
                     originalTextCard(result.originalText)
 
+                    // `get` 必须读 `self.result`，**不能捕获 `if let` 解包出来的快照**。
+                    //
+                    // 捕获快照的话，同一个事件里连着改几个字段就会互相覆盖：SwiftUI 在
+                    // 一次事件内不重算 body，于是每次 `get()` 都返回同一份旧值，第二次
+                    // 写回会把第一次的修改带回来。「清除课程」要清 courseID / courseName /
+                    // courseBasis 三个字段，实机上的表现就是点 X 完全没反应。
                     AIDraftEditor(
-                        result: Binding(get: { result }, set: { self.result = $0 }),
+                        result: Binding(get: { self.result ?? result }, set: { self.result = $0 }),
                         categories: categories,
                         subjects: subjects,
                         availableTags: availableTags,
@@ -362,6 +368,14 @@ private struct AIDraftEditor: View {
                         .labelsHidden()
                 }
                 Divider()
+                // 「全天」必须紧挨着「截止」：它其实是那一行的开关——关掉之后
+                // 上面才会出现时间选择器。之前它放在卡片外面、标签选择器上方，
+                // 实机反馈是「草稿填不了具体截止时间」，用户根本没把两者联系起来。
+                DraftField(title: "全天") {
+                    Toggle("全天", isOn: $result.draft.allDay)
+                        .labelsHidden()
+                }
+                Divider()
                 DraftField(title: "优先级") {
                     Picker("优先级", selection: $result.draft.priority) {
                         ForEach(DeadlinePriority.allCases) { Text($0.title).tag($0) }
@@ -372,10 +386,6 @@ private struct AIDraftEditor: View {
             }
             .padding(.horizontal, 16)
             .paperCard()
-
-            Toggle("全天", isOn: $result.draft.allDay)
-                .font(.subheadline)
-                .padding(.horizontal, 4)
 
             TagPicker(tags: $result.draft.tags, availableTags: availableTags, suggestedIDs: suggestedTagIDs)
                 .padding(.horizontal, 4)
@@ -413,11 +423,21 @@ private extension AIDraftEditor {
             .padding(.vertical, 12)
     }
 
+    /// 三个字段**一次写回**，不要连写三次。
+    ///
+    /// 逐个写的话每次都是一轮 get/set，而 SwiftUI 在同一个事件里不重算 body，
+    /// 上游 binding 的 `get` 只要有一点滞后就会把前一次的清除覆盖掉。
+    /// 合成一次写入，这条路就不依赖上游 binding 的实现细节了。
+    ///
+    /// 也不再用 `courseID != nil` 做前置判断：课程行是按 `courseName` 显示的，
+    /// 万一两者不同步，那个 guard 会让按钮彻底失效——而用户看得见的是那一行还在。
     func clearCourse() {
-        guard result.draft.courseID != nil else { return }
-        result.draft.courseID = nil
-        result.courseName = nil
-        result.courseBasis = nil
+        guard result.draft.courseID != nil || result.courseName != nil else { return }
+        var updated = result
+        updated.draft.courseID = nil
+        updated.courseName = nil
+        updated.courseBasis = nil
+        result = updated
     }
 }
 
