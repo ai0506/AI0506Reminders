@@ -18,6 +18,8 @@ struct AIComposerSheet: View {
     @State private var result: AIParseResult?
     @State private var isCreating = false
     @State private var parseTask: Task<Void, Never>?
+    @State private var revealTask: Task<Void, Never>?
+    @State private var isParsing = false
 
     var body: some View {
         NavigationStack {
@@ -35,7 +37,7 @@ struct AIComposerSheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("关闭") {
-                        parseTask?.cancel()
+                        cancelParsing()
                         dismiss()
                     }
                 }
@@ -80,11 +82,11 @@ struct AIComposerSheet: View {
                 .font(.footnote)
                 .foregroundStyle(.secondary)
 
-                Button("分析这段话") { startParsing() }
+                Button(isParsing ? "正在分析…" : "分析这段话") { startParsing() }
                     .buttonStyle(.borderedProminent)
                     .tint(RemindersTheme.accent)
                     .foregroundStyle(RemindersTheme.actionForeground)
-                    .disabled(trimmedPrompt.isEmpty)
+                    .disabled(isParsing || trimmedPrompt.isEmpty)
             }
             .padding(24)
             .frame(maxWidth: 680, alignment: .leading)
@@ -116,8 +118,7 @@ struct AIComposerSheet: View {
                 .padding(.horizontal, 32)
 
             Button("取消") {
-                parseTask?.cancel()
-                parseTask = nil
+                cancelParsing()
                 phase = .input
             }
             .buttonStyle(.plain)
@@ -144,23 +145,38 @@ struct AIComposerSheet: View {
                         subjects: subjects,
                         availableTags: availableTags
                     )
-
-                    Button(isCreating ? "正在创建…" : "创建截止事项") {
-                        Task {
-                            isCreating = true
-                            let created = await onCreate(result.draft)
-                            isCreating = false
-                            if created { dismiss() }
-                        }
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(RemindersTheme.accent)
-                    .foregroundStyle(RemindersTheme.actionForeground)
-                    .disabled(isCreating || result.draft.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
             .padding(24)
             .frame(maxWidth: 680, alignment: .leading)
+        }
+        // 草稿字段比一屏长，主操作跟着内容滚就会掉到折叠线以下：横屏下要先滚到底
+        // 才看得见「创建截止事项」，看起来像这一步没有出口。固定在底部常驻。
+        .safeAreaInset(edge: .bottom) { createBar }
+    }
+
+    @ViewBuilder
+    private var createBar: some View {
+        if let result {
+            VStack(spacing: 0) {
+                Divider()
+                Button(isCreating ? "正在创建…" : "创建截止事项") {
+                    Task {
+                        isCreating = true
+                        let created = await onCreate(result.draft)
+                        isCreating = false
+                        if created { dismiss() }
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(RemindersTheme.accent)
+                .foregroundStyle(RemindersTheme.actionForeground)
+                .disabled(isCreating || result.draft.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .frame(maxWidth: 680)
+                .padding(.horizontal, 24)
+                .padding(.vertical, 14)
+            }
+            .background(.bar)
         }
     }
 
@@ -191,24 +207,38 @@ struct AIComposerSheet: View {
     private func startParsing() {
         let text = trimmedPrompt
         guard !text.isEmpty else { return }
-        phase = .parsing
-        parseTask?.cancel()
-        parseTask = Task {
-            let startedAt = Date()
-            let parsed = await store.parseMockAI(text)
-            // 本地解析只要半秒左右，动画一闪而过反而像故障。给这一步一个
-            // 最短停留时间，让「正在分析」读得出来；真实 AI 接入后本来就更慢，
-            // 这段等待会自然消失。
-            let minimumDwell: TimeInterval = 0.45
-            let elapsed = Date().timeIntervalSince(startedAt)
-            if elapsed < minimumDwell {
-                try? await Task.sleep(for: .seconds(minimumDwell - elapsed))
-            }
+        cancelParsing()
+        isParsing = true
+        // 「正在分析」这一屏只在解析真的慢到会被察觉时才出现。本地演示解析是纯计算、
+        // 瞬间返回，先切过去再切回来，用户看到的不是进度，而是一次多余的转场加一段
+        // 人为等待——这一步原本还有 0.45 秒的最短停留，正是那段等待让「AI 创建」
+        // 显得卡住。输入屏在这段窗口里靠按钮文案「正在分析…」表示已经接收（§7.1）。
+        // 真实 AI 的请求本来就超过这个阈值，这一屏会自然回来，三步结构不变。
+        revealTask = Task {
+            try? await Task.sleep(for: .milliseconds(180))
             guard !Task.isCancelled else { return }
+            phase = .parsing
+        }
+        parseTask = Task {
+            let parsed = await store.parseMockAI(text)
+            revealTask?.cancel()
+            revealTask = nil
+            guard !Task.isCancelled else { return }
+            isParsing = false
             result = parsed
             phase = .draft
             parseTask = nil
         }
+    }
+
+    /// 取消解析：两个 task 必须一起停。只停 `parseTask` 的话，那个还在睡的
+    /// `revealTask` 会在 180ms 后把界面推进「正在分析」，而解析早就被放弃了。
+    private func cancelParsing() {
+        revealTask?.cancel()
+        revealTask = nil
+        parseTask?.cancel()
+        parseTask = nil
+        isParsing = false
     }
 }
 

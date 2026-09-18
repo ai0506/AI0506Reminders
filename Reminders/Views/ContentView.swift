@@ -124,6 +124,24 @@ private struct SidebarView: View {
     }
 }
 
+/// 冷启动时演示 / 缓存数据大约 100ms 就到位了，这段时间直接放 `ProgressView`
+/// 会闪一个转圈再跳成内容，读起来比什么都不显示还慢。超过 250ms 仍在加载才显示，
+/// 真的慢（比如首屏就在等真实 API）时反馈照常出现。
+private struct DelayedProgressView: View {
+    @State private var isVisible = false
+
+    var body: some View {
+        Group {
+            if isVisible { ProgressView() } else { Color.clear }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .task {
+            try? await Task.sleep(for: .milliseconds(250))
+            isVisible = true
+        }
+    }
+}
+
 private struct DeadlineListView: View {
     @Bindable var store: DeadlineStore
     let onCreate: () -> Void
@@ -132,7 +150,7 @@ private struct DeadlineListView: View {
     var body: some View {
         Group {
             if store.isLoading && store.deadlines.isEmpty {
-                ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+                DelayedProgressView()
             } else if store.groups.isEmpty {
                 ContentUnavailableView(
                     "这里没有截止事项",
