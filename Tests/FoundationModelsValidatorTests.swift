@@ -219,7 +219,7 @@ struct FoundationModelsValidatorTests {
         // 非学业学科不能出现在清单里，否则模型选了它必然被拒。
         #expect(!text.contains("Stray"))
         // 用户原文是不可信输入，必须有明确边界。
-        #expect(text.contains("\"\"\"\n把作文改完\n\"\"\""))
+        #expect(text.contains("<user_text>\n把作文改完\n</user_text>"))
     }
 
     // MARK: - 时间仍归正则
