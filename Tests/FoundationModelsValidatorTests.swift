@@ -188,6 +188,28 @@ struct FoundationModelsValidatorTests {
 
     // MARK: - 提示词
 
+    @Test("目录查找容忍模型多打的空格", arguments: [" Academics", "Academics ", " academics "])
+    func leadingWhitespaceIsTolerated(_ written: String) throws {
+        // 真实目录上实测到过：模型回 " Academics"、" Other Subjects"。
+        // 当成非法值打回去重试，白等一轮推理，答案还是同一个。
+        let checked = try accepted(Validator.validate(proposal(category: written), catalog: catalog))
+        #expect(checked.category?.id == "cat-academics")
+    }
+
+    @Test("分类清单必须带用途说明，否则模型把什么都归进第一个分类")
+    func categoriesCarryTheirPurpose() {
+        // 用真实目录跑的探针里，只给名字时 10 个输入 10 个 Academics，
+        // 连「续费 iCloud」都算学业。
+        let text = PromptBuilder.request(catalog: catalog, userText: "续费 iCloud")
+        #expect(text.contains("Academics — "))
+        #expect(text.contains("Leisure — "))
+        // 说明文字不能用标签名当例子：早期版本把 Leisure 写成 "friends, rest"，
+        // 模型转头就把它们当标签填了。
+        for tag in catalog.tags.map(\.name) {
+            #expect(!text.contains("— \(tag)"), "分类说明里不该出现标签名 \(tag)")
+        }
+    }
+
     @Test("提示词把全部合法值都给了模型，且用户原文被隔离起来")
     func promptCarriesTheWholeCatalog() {
         let text = PromptBuilder.request(catalog: catalog, userText: "把作文改完")

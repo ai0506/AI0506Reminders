@@ -19,7 +19,7 @@ struct DraftProposal {
     @Guide(description: "学科名，逐字取自 Subjects 清单；不是学业相关就留空")
     var subjectName: String?
 
-    @Guide(description: "逐字取自 Tags 清单里的名字。最多两个，通常一个。", .maximumCount(2))
+    @Guide(description: "逐字取自 Tags 清单里的名字。没有贴切的就返回空数组——宁可不选，也不要造一个清单外的词。最多两个。", .maximumCount(2))
     var tagNames: [String]
 
     var priority: PriorityProposal
@@ -71,18 +71,27 @@ struct PromptCatalog {
         return subjects.filter { academicIDs.contains($0.categoryID) }
     }
 
-    /// 大小写不敏感查找：模型经常把 "review" 写成 "Review"。
-    /// 这种是能安全修正的，不值得为它多跑一轮推理。
+    /// 查找一律**先 trim 再忽略大小写**。
+    ///
+    /// 两种漂移在真实目录上都实测到过：模型把 "review" 写成 "Review"，以及在名字前面
+    /// 多加一个空格（" Academics"、" Other Subjects"）。把这些当成非法值打回去重试，
+    /// 白等一轮推理，答案还是同一个。
     func category(named name: String) -> DeadlineCategory? {
-        categories.first { $0.name.compare(name, options: .caseInsensitive) == .orderedSame }
+        matching(name, in: categories.map { ($0.name, $0) })
     }
 
     func subject(named name: String) -> DeadlineSubject? {
-        academicSubjects.first { $0.name.compare(name, options: .caseInsensitive) == .orderedSame }
+        matching(name, in: academicSubjects.map { ($0.name, $0) })
     }
 
     func tag(named name: String) -> DeadlineTag? {
-        tags.first { $0.name.compare(name, options: .caseInsensitive) == .orderedSame }
+        matching(name, in: tags.map { ($0.name, $0) })
+    }
+
+    private func matching<T>(_ name: String, in pairs: [(String, T)]) -> T? {
+        let needle = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !needle.isEmpty else { return nil }
+        return pairs.first { $0.0.compare(needle, options: .caseInsensitive) == .orderedSame }?.1
     }
 }
 
@@ -113,7 +122,11 @@ enum PromptBuilder {
 
         lines.append("Categories (pick exactly one):")
         for category in catalog.categories {
-            lines.append("- \(category.name)")
+            if let purpose = Self.purpose(of: category) {
+                lines.append("- \(category.name) — \(purpose)")
+            } else {
+                lines.append("- \(category.name)")
+            }
         }
 
         let subjects = catalog.academicSubjects
@@ -134,6 +147,26 @@ enum PromptBuilder {
         lines.append("\"\"\"")
 
         return lines.joined(separator: "\n")
+    }
+
+    /// 分类只给名字时模型会把**所有**东西都归进第一个分类：用真实目录跑的探针里
+    /// 10 个输入 10 个 Academics，连「续费 iCloud」都算学业。补上一句用途就好了。
+    ///
+    /// 说明文字是提示语，不是合法值——分类本身仍然完全来自后端目录，这里查不到的
+    /// 分类就只列名字，后端新增分类不会因此出错。
+    ///
+    /// 措辞要避开标签名：早期版本把 Leisure 写成 "friends, rest"，模型转头就把
+    /// friends 和 rest 当成标签填进了 tagNames。
+    private static let purposes: [String: String] = [
+        "Academics": "anything for school lessons: worksheets, essays, revision, tests",
+        "Research": "independent investigation beyond regular lessons",
+        "Projects": "something the user is building or shipping",
+        "Leisure": "life outside school: friends, family, rest, chores",
+        "Tech": "computers, phones, software and paid services"
+    ]
+
+    private static func purpose(of category: DeadlineCategory) -> String? {
+        purposes.first { $0.key.compare(category.name, options: .caseInsensitive) == .orderedSame }?.value
     }
 
     /// 重试消息必须指名道姓说错在哪——笼统说「不合法」模型只会再猜一次。
