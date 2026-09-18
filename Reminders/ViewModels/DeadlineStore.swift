@@ -172,12 +172,32 @@ final class DeadlineStore {
     /// AI 面板出现时就调，别等用户点「分析这段话」。
     /// 首次推理要加载模型，那段成本正好用用户打字的几秒吃掉；课程上下文也一并在
     /// 这段时间里取回来，免得解析时再等三个请求。
+    /// 面板出现时启动预热和课程数据，但**都推迟到面板可交互之后**。
+    ///
+    /// 原来是面板一出现就同帧开工。真机上的表现是「刚进去卡一会儿、按钮没反应、
+    /// 输入框要点好久才能进去」——加载模型权重要抢 CPU 和内存带宽，而课程那三个请求
+    /// 的 JSON 解码全在主线程上（`DeadlineRepository` 是 `@MainActor`），
+    /// 正好和呈现动画、第一次点击撞在一起。开发机上这两件事都快得察觉不出。
+    ///
+    /// 这两件事都不是用户此刻需要的：他要先点输入框、先打字。所以延后一点再开始，
+    /// 并降到 `.utility` 优先级，让 UI 永远排在它们前面。预热仍然发生在用户打字的
+    /// 那几秒里，原来的好处没丢。
     func prewarmAI() {
         // 两个独立的 Task，不要串在一起：预热是模型侧的事，取课程上下文是网络的事，
         // 谁也不该等谁。解析器现在是 actor，预热调用要 await 才能进去。
-        Task { await aiParser.prewarm() }
-        Task { await loadCourseContext() }
+        // 预热要延后：它是 CPU 和内存带宽的大头，撞在呈现动画和第一次点击上最疼。
+        Task(priority: .utility) {
+            try? await Task.sleep(for: .milliseconds(700))
+            await aiParser.prewarm()
+        }
+        // 课程数据**不延后**，只降优先级：它的大头是网络往返（挂起，不占线程），
+        // 延后反而会让「打开面板马上点分析」的时候课程还没到位，而课程归属正是
+        // 这个面板最有用的部分。改成记下这个 task，解析前等它一下（见 `parseAI`）。
+        courseContextTask = Task(priority: .utility) { await loadCourseContext() }
     }
+
+    /// 取课程上下文的那趟任务。`parseAI` 要等它，否则面板一打开就点「分析」会拿不到课程。
+    @ObservationIgnored private var courseContextTask: Task<Void, Never>?
 
     /// 课程上下文只有 AI 创建用得上，所以不在冷启动的 refresh 里取，等 AI 面板打开再说。
     ///
@@ -207,6 +227,10 @@ final class DeadlineStore {
     /// 而不是一个错误弹窗——`MockAIDeadlineParser` 至少能解出时间和标题。
     func parseAI(_ input: String) async -> AIParseResult {
         aiNote = nil
+        // 课程数据是在面板打开时后台取的，用户可能比它快。不等的话，「打开就点分析」
+        // 会静默地拿不到课程归属——这条路径此前一直有这个竞态，只是延迟变长后才显形。
+        // 三个请求全失败也只是让课程为空，所以这里等待不会把解析卡死。
+        await courseContextTask?.value
         do {
             let context = CourseContextBuilder().build(
                 input: input,
@@ -233,8 +257,21 @@ final class DeadlineStore {
     }
 
     /// 设备端模型此刻是否可用，决定 AI 面板上那行隐私说明的措辞。
+    ///
+    /// **结果要缓存。** `SystemLanguageModel.default.availability` 每次读都要跟系统打交道
+    /// （开发机上实测首次 4.9ms、之后每次 0.36ms，iPad 只会更慢），而这个值被写在
+    /// AI 面板的 body 里——用户每敲一个字 body 就重算一次，于是每个按键都白付一次这个
+    /// 开销。真机上「最开始打字也卡」有一份是它贡献的。
+    ///
+    /// 用 `@ObservationIgnored`：这是纯缓存，不是状态。不标的话在 body 求值过程中写它
+    /// 会被观察系统记成一次变更，引出多余的重算。
+    @ObservationIgnored private var cachedModelAvailability: Bool?
+
     var isOnDeviceModelAvailable: Bool {
-        FoundationModelsDeadlineParser.availability == nil
+        if let cachedModelAvailability { return cachedModelAvailability }
+        let available = FoundationModelsDeadlineParser.availability == nil
+        cachedModelAvailability = available
+        return available
     }
 
     /// 连接必须自己发一次请求并让错误抛出来。
