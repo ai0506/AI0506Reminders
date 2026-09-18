@@ -33,7 +33,8 @@ final class FoundationModelsDeadlineParser {
         }
     }
 
-    private var session: LanguageModelSession?
+    /// 只用来预热模型权重，不参与真正的解析（解析每次开新的，见 `parse`）。
+    private var warmupSession: LanguageModelSession?
 
     static var availability: Unavailable? {
         switch SystemLanguageModel.default.availability {
@@ -50,8 +51,10 @@ final class FoundationModelsDeadlineParser {
     /// 首次推理要加载模型，那段成本正好用用户打字的几秒吃掉。
     func prewarm() {
         guard Self.availability == nil else { return }
-        let session = session ?? makeSession()
-        self.session = session
+        // 预热加载的是模型权重，那是进程级的资源，不属于某一个 session——
+        // 所以这里预热的 session 和后面解析用的不是同一个，也不影响效果。
+        let session = warmupSession ?? makeSession()
+        warmupSession = session
         session.prewarm()
     }
 
@@ -65,8 +68,15 @@ final class FoundationModelsDeadlineParser {
         if let unavailable = Self.availability { throw unavailable }
 
         let catalog = PromptCatalog(categories: categories, tags: tags, subjects: subjects)
-        let session = session ?? makeSession()
-        self.session = session
+        // 每次解析开一个新 session。
+        //
+        // `LanguageModelSession` 是有状态的：每轮问答都留在它的 transcript 里，下一次
+        // 请求会把历史一起送进去。而上下文窗口只有 4096 token 且**连输出一起算**，
+        // 复用同一个 session 的话，连着解析几条就会把窗口撑爆，报
+        // `exceededContextWindowSize` 而不是给出草稿。
+        // 每条笔记的解析本来也互不相干，不需要看见上一条。
+        // 一次解析**内部**的重试仍然复用这个 session——重试就是要让模型看到自己刚才的回答。
+        let session = makeSession()
 
         var prompt = PromptBuilder.request(catalog: catalog, userText: input)
         var attempt = 0
