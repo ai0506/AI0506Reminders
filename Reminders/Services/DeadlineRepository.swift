@@ -23,9 +23,9 @@ enum RepositoryError: LocalizedError {
 }
 
 struct MockDeadlineRepository: DeadlineRepository {
+    // 演示仓库不再人造延迟：这些等待只是让界面显得慢，没有任何信息量。
     func fetchDeadlines() async throws -> [Deadline] {
-        try await Task.sleep(for: .milliseconds(280))
-        return DemoData.deadlines
+        DemoData.deadlines
     }
 
     func fetchCatalog() async throws -> DeadlineCatalog {
@@ -33,8 +33,7 @@ struct MockDeadlineRepository: DeadlineRepository {
     }
 
     func create(_ draft: DeadlineDraft) async throws -> Deadline {
-        try await Task.sleep(for: .milliseconds(220))
-        return Deadline(
+        Deadline(
             id: UUID().uuidString,
             title: draft.title,
             detail: draft.detail,
@@ -49,7 +48,6 @@ struct MockDeadlineRepository: DeadlineRepository {
     }
 
     func setCompletion(_ deadline: Deadline, completed: Bool) async throws -> Deadline {
-        try await Task.sleep(for: .milliseconds(180))
         var updated = deadline
         updated.status = completed ? .completed : (updated.dueDate < Date() ? .overdue : .open)
         updated.updatedAt = Date()
@@ -58,14 +56,15 @@ struct MockDeadlineRepository: DeadlineRepository {
 }
 
 enum DemoData {
+    // 标签与学科同样是后端目录里的名字，保持英文原名与 Calendar 的科目色板一致。
     static let tags: [DeadlineTag] = [
-        .init(id: "exam", name: "考试"), .init(id: "urgent", name: "紧急"),
-        .init(id: "writing", name: "写作"), .init(id: "review", name: "复习")
+        .init(id: "exam", name: "exam"), .init(id: "urgent", name: "urgent"),
+        .init(id: "writing", name: "writing"), .init(id: "review", name: "review")
     ]
     static let subjects: [DeadlineSubject] = [
-        .init(id: "sub-math", name: "数学", categoryID: "academics", colorHex: "#9B7BD0"),
-        .init(id: "sub-physics", name: "物理", categoryID: "academics", colorHex: "#6395D6"),
-        .init(id: "sub-cs", name: "计算机科学", categoryID: "academics", colorHex: "#65A66E")
+        .init(id: "sub-math", name: "Math", categoryID: "academics", colorHex: "#FF3B30"),
+        .init(id: "sub-physics", name: "Physics", categoryID: "academics", colorHex: "#32ADE6"),
+        .init(id: "sub-cs", name: "CS", categoryID: "academics", colorHex: "#30B855")
     ]
 
     static let deadlines: [Deadline] = {

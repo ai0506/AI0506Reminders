@@ -143,22 +143,33 @@ final class DeadlineStore {
     }
 
     func parseMockAI(_ input: String) async -> AIParseResult {
-        try? await Task.sleep(for: .milliseconds(560))
+        // 解析本身是纯本地计算，没有理由等。这一步的可见时长由 AIComposerSheet
+        // 的最短停留控制，不在这里人造延迟。
         return MockAIDeadlineParser.parse(input: input, categories: categories, tags: availableTags, subjects: subjects)
     }
 
-    func connect(to configuration: CalendarAPIRepository.Configuration) async -> Bool {
-        let previousRepository = repository
-        let previousMode = isDemoMode
+    /// 连接必须自己发一次请求并让错误抛出来。
+    ///
+    /// 不能拿 `refresh()` 的结果判断连通性：本地只要已经有数据（冷启动的演示数据、
+    /// 或上次的离线缓存），`refresh()` 就会把请求失败降级成「离线」提示并清掉
+    /// `errorMessage`。于是填错地址或令牌也会被判定成连接成功——界面显示「已连接」、
+    /// 错误的令牌被写进钥匙串、列表里还是演示数据，用户完全分辨不出来。
+    func connect(to configuration: CalendarAPIRepository.Configuration) async throws {
+        let candidate = CalendarAPIRepository(configuration: configuration)
+        _ = try await candidate.fetchDeadlines()
+        repository = candidate
+        isDemoMode = false
+        errorMessage = nil
+        await refresh()
+    }
+
+    /// 启动时恢复已保存的连接。这份配置在保存时已经探测过，所以这里不再探测，
+    /// 直接采用并交给 `refresh()` 按离线规则降级——否则一开机没网就会退回演示工作区，
+    /// 把用户真实的缓存数据藏起来。
+    func restoreConnection(_ configuration: CalendarAPIRepository.Configuration) async {
         repository = CalendarAPIRepository(configuration: configuration)
         isDemoMode = false
         await refresh()
-        if errorMessage != nil {
-            repository = previousRepository
-            isDemoMode = previousMode
-            return false
-        }
-        return true
     }
 
     func useDemoWorkspace() async {

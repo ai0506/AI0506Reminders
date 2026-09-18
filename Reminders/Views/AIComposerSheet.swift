@@ -199,7 +199,7 @@ struct AIComposerSheet: View {
             // 本地解析只要半秒左右，动画一闪而过反而像故障。给这一步一个
             // 最短停留时间，让「正在分析」读得出来；真实 AI 接入后本来就更慢，
             // 这段等待会自然消失。
-            let minimumDwell: TimeInterval = 0.9
+            let minimumDwell: TimeInterval = 0.45
             let elapsed = Date().timeIntervalSince(startedAt)
             if elapsed < minimumDwell {
                 try? await Task.sleep(for: .seconds(minimumDwell - elapsed))
@@ -228,9 +228,9 @@ private struct ParsingIndicator: View {
                     .animation(
                         reduceMotion
                             ? nil
-                            : .easeInOut(duration: 0.66)
+                            : .easeInOut(duration: 0.42)
                                 .repeatForever(autoreverses: true)
-                                .delay(Double(index) * 0.18),
+                                .delay(Double(index) * 0.12),
                         value: animating
                     )
             }

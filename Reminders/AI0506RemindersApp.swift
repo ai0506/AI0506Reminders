@@ -12,7 +12,7 @@ struct AI0506RemindersApp: App {
                 .preferredColorScheme(nil)
                 .task {
                     guard let configuration = connection.savedConfiguration else { return }
-                    _ = await store.connect(to: configuration)
+                    await store.restoreConnection(configuration)
                 }
                 .onOpenURL { url in
                     store.open(url: url)

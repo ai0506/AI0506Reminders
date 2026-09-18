@@ -29,21 +29,18 @@ final class CalendarConnectionStore {
         do {
             let configuration = try configuration()
             isConnecting = true
-            let connected = await store.connect(to: configuration)
-            isConnecting = false
-            guard connected else {
-                connectionMessage = store.errorMessage ?? "无法连接 Calendar。"
-                store.errorMessage = nil
-                return
-            }
+            defer { isConnecting = false }
+            // 只有探测成功才走到下面这行，令牌也只有到这里才会落盘。
+            try await store.connect(to: configuration)
             try CalendarCredentialVault.saveToken(configuration.bearerToken)
             UserDefaults.standard.set(configuration.baseURL.absoluteString, forKey: Self.baseURLKey)
             token = ""
             hasSavedToken = true
             connectionMessage = "已连接到你的 Calendar 截止事项。"
         } catch {
-            isConnecting = false
-            connectionMessage = error.localizedDescription
+            // 光给系统原文（"A TLS error caused..."）不够：用户要知道自己填的东西
+            // 有没有被保存、接下来能做什么。
+            connectionMessage = "无法连接 Calendar：\(error.localizedDescription)\n地址和令牌都没有保存，修改后可以重试；当前仍在演示工作区。"
         }
     }
 

@@ -33,12 +33,14 @@ struct DeadlineCategory: Identifiable, Codable, Hashable {
     var colorHex: String
     var kind: String = "normal"
 
+    /// 分类名与配色照抄 Calendar 后端的真实目录（见 `Calendar/production/FRONTEND_SPEC.md` §6）。
+    /// 分类是后端数据，不在 iPad 侧翻译——翻译会让同一条 Deadline 在 iPad 和 Web 上显示不同名字。
     static let all: [DeadlineCategory] = [
-        .init(id: "academics", name: "学业", colorHex: "#78716C", kind: "academics"),
-        .init(id: "research", name: "研究", colorHex: "#54A9A3"),
-        .init(id: "projects", name: "项目", colorHex: "#E69A58"),
-        .init(id: "leisure", name: "生活", colorHex: "#999A9F"),
-        .init(id: "tech", name: "技术", colorHex: "#6395D6")
+        .init(id: "academics", name: "Academics", colorHex: "#655F58", kind: "academics"),
+        .init(id: "research", name: "Research", colorHex: "#7F5FB5"),
+        .init(id: "projects", name: "AI0506 Project", colorHex: "#C07043"),
+        .init(id: "leisure", name: "Personal", colorHex: "#BD5F86"),
+        .init(id: "tech", name: "Tech", colorHex: "#64748B")
     ]
 
     var tint: Color { Color(hex: colorHex) }

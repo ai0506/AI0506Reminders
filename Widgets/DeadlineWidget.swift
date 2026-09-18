@@ -20,9 +20,9 @@ struct DeadlineWidgetProvider: TimelineProvider {
 
     private var fallback: DeadlineWidgetEntry {
         .init(date: .now, upcoming: [
-            .init(id: "demo-1", title: "提交研究计划书", dueDate: .now, allDay: false, category: "研究", colorHex: "#54A9A3", priority: .high),
-            .init(id: "demo-2", title: "完成光学复习", dueDate: .now.addingTimeInterval(86_400), allDay: true, category: "学业", colorHex: "#6395D6", priority: .default),
-            .init(id: "demo-3", title: "整理研讨课笔记", dueDate: .now.addingTimeInterval(172_800), allDay: true, category: "研究", colorHex: "#54A9A3", priority: .low)
+            .init(id: "demo-1", title: "提交研究计划书", dueDate: .now, allDay: false, category: "Research", colorHex: "#7F5FB5", priority: .high),
+            .init(id: "demo-2", title: "完成光学复习", dueDate: .now.addingTimeInterval(86_400), allDay: true, category: "Academics", colorHex: "#655F58", priority: .default),
+            .init(id: "demo-3", title: "整理研讨课笔记", dueDate: .now.addingTimeInterval(172_800), allDay: true, category: "Research", colorHex: "#7F5FB5", priority: .low)
         ])
     }
 }
