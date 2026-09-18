@@ -79,7 +79,7 @@ xcodebuild -project AI0506Reminders.xcodeproj -scheme AI0506Reminders -destinati
 |---|---|
 | `Reminders/Views/` | 全部界面。`ContentView.swift` 是三栏主界面 + 列表行 + 详情；另三个是 sheet。 |
 | `Reminders/ViewModels/DeadlineStore.swift` | **唯一状态入口**。筛选、分组、刷新、创建、完成/重开、深链接都在这里。 |
-| `Reminders/Services/` | Repository（演示 / 真实 API）、Keychain 连接、离线缓存、通知调度、模拟 AI 解析。 |
+| `Reminders/Services/` | Repository（演示 / 真实 API）、Keychain 连接、离线缓存、通知调度。AI 解析是四个文件：`FoundationModelsDeadlineParser`（设备端模型调用与重试）、`FoundationModelsPrompt`（提示词与目录）、`FoundationModelsValidator`（模型输出的守门人）、`MockAIDeadlineParser`（时间正则 + 模型不可用时的回退）。课程归属在 `CourseContextBuilder`（候选）与 `CourseResolver`（推断）+ `CourseHabits`（记法规则）。 |
 | `Reminders/Models/Deadline.swift` | 领域模型与 `DeadlineFilter`。**Widget target 也编译这个文件**。 |
 | `Reminders/Theme/DesignSystem.swift` | 设计令牌与 `.paperCard()` / `.reminderCanvas()`。**Widget target 也编译这个文件**。 |
 | `Shared/` | App 与 Widget 共用：App Group 快照、URL Scheme 路由。 |
@@ -130,6 +130,51 @@ subject_id、标签不超 5 个），`SharedFixtureTests` 会盯着 `DeadlineCat
 
 **token 只进 iPad 钥匙串。** 不写进源码、`project.yml`、README、`updates.md`、日志、错误信息和截图。错误提示也不要把原始响应体整个抛给用户。
 
+### Foundation Models
+
+下面这些都是实测撞出来的，不是文档里读来的。改 AI 相关代码前先看一遍。
+
+**每次解析都要新建 `LanguageModelSession`。** 它是有状态的：每轮问答都留在 transcript 里，
+下次请求连历史一起送。而上下文窗口只有 **4096 token 且连输出一起算**。让 parser 长期持有
+一个 session 的话，同一次运行里连续解析到第 9 条就报 `exceededContextWindowSize`，
+静默回退成规则解析——用户只会觉得「AI 突然变笨了」。一次解析**内部**的重试仍复用同一
+session，重试就是要让模型看见自己刚才的回答。
+
+**日期时间不要交给模型。** 提示词里写了「Now: Friday 16:50」，模型就会把那些数字当答案抄走：
+「明天下午三点」解出 16 点，五个用例的星期全塌缩成 Friday。时间一律走
+`MockAIDeadlineParser.timing` 的正则，确定性的事不给模型做。
+
+**`@Generable` 枚举的第一个 case 有强偏置。** 模型倾向于选第一个，所以每个枚举的首项必须是
+最安全的默认值（`normal` / `medium`）。改顺序前先重跑探针。
+
+**分类清单只给名字，模型会把所有东西都归进第一个。** 真实目录上实测 10 个输入 10 个
+Academics，连「续费 iCloud」都算学业。每个分类必须带一句用途说明。
+
+**模型会编造清单外的名字，也会多打空格。** 真实目录上 7 个用例编了 3 次标签名；分类名会返回
+成 `" Academics"`。所以目录查找一律**先 trim 再忽略大小写**，查不到的值该丢就丢、该重试就重试
+（见 `Validator` 的两级分法）。
+
+**提示词措辞会跨语言串扰。** Research 的说明里写 "literature review"，模型把 literature 当成
+中文「文学分析」的「文学」，把英语课作业吸成了科研；分类说明里把 Leisure 写成 "friends, rest"，
+模型转头就把 friends 和 rest 当标签填了。写说明时避开标签名，也避开会跨语言撞上的词。
+
+**不要为单个用例调提示词。** 为了让「经济学的论文」归 Academics 加了一句「paper 是课业不是科研」，
+真实数据上 5 条 Research 事项全部被误判成 Academics。改提示词必须跑覆盖真实分布的回归集：
+用 MCP 拉真实 Deadline 标题、期望值取数据库里的 `category`/`subject_id`，每例跑 2–3 轮看稳定性
+（端侧模型接近确定性，同一用例三轮结果基本一致，所以三轮就能分清真回归和抖动）。
+
+**不要照搬 OnlineSoup 的输入加固。** 那个项目调云端 API、面向所有玩家，提示词里装着玩家想套出来的
+汤底；这里是设备端模型、只有机主一个用户，提示词里全是他自己的分类清单，没有可泄露的东西。
+实测加与不加质量完全一样（15/24 对 15/24），白占 55 token。它的**功能性**做法仍值得学：
+few-shot 给最高优先级、标签定义写足边界和反例。
+
+**课程归属不让模型选。** 给模型课程候选会锚定它的分类判断（加了课程列表后「修一下那个崩溃」
+被拉进 Academics）。课程本来就能确定性推出来——Physics/CS/Math 各只有一门课，English 那几门
+靠记法区分。模型只判断学科，课程走 `CourseResolver` 的四级规则。
+
+**改这块之前先跑探针，别盲改。** 打印模型的 `reason` 字段最有用：有一次「文学分析」看着全错，
+打出来才发现模型的学科和课程都判对了，是 app 侧「非 Academics 就清空」的决议顺序把对的清掉了。
+
 **演示模式是默认状态。** 首次运行进的是不写远端的 Demo workspace，`isDemoMode = true`。在模拟器上「验证通过」不等于真实 API 通过——真实后端、通知授权、Widget 上主屏、真机性能都还没验收，别替用户宣称已验收。
 
 ## 完成前验证
@@ -138,8 +183,10 @@ subject_id、标签不超 5 个），`SharedFixtureTests` 会盯着 `DeadlineCat
 2. 跑 `test`，Swift Testing 用例必须全绿。
 3. 改了界面：在 iPad Pro 11-inch 模拟器里**浅色和深色各看一遍**，并按 `Frontend_spec.md` §20 的清单过一遍相关项。横竖屏都要转一次。
 4. 改了 Widget 或通知：在模拟器里实际触发一次，不要只看代码。
-5. 往 `updates.md` 追加一条（见下）。
-6. 事实变了就同步 `Frontend_spec.md`（尤其 §22 技术债表）和 `REMINDERS_PLAN.md` 的状态表。
+5. 改了 AI 提示词或校验规则：**跑真实回归集**，别只看一两个例子好不好。做法见上面
+   〈Foundation Models〉那条——单元测试挡不住提示词的语义漂移，它只能挡住结构问题。
+6. 往 `updates.md` 追加一条（见下）。
+7. 事实变了就同步 `Frontend_spec.md`（尤其 §22 技术债表）和 `REMINDERS_PLAN.md` 的状态表。
 
 明确告诉用户哪些检查跑过了、哪些因为没有真机或没有 Calendar 凭据**没跑**。
 
@@ -171,7 +218,7 @@ subject_id、标签不超 5 个），`SharedFixtureTests` 会盯着 `DeadlineCat
 
 - 不把 token、API 地址或任何凭据写进仓库里的任何文件。
 - 不引入 EventKit，不读写 Apple 日历 / Apple 提醒事项。
-- 不在 iPad App 里放任何 AI API Key。真实 AI 必须走 Calendar 后端的 Proxy。
+- 不在 iPad App 里放任何 AI API Key，也不引入任何云端 AI。AI 一律是设备端 Apple Foundation Models，用户输入不离开这台 iPad。原计划的「Calendar 后端 AI Proxy」已经不做了。
 - 不让 AI 解析结果未经用户确认就直接创建 Deadline。
 - 不手改 `.xcodeproj`。
 - 不在 iPad 侧自行发明分类 / 科目 / 优先级的合法值，一律以 Calendar 后端目录为准。

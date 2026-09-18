@@ -11,15 +11,15 @@
 | iPad 界面 | Today / Upcoming / Overdue / All / 分类与标签导航、横屏三栏、详情、稳定的创建与 AI 入口；浅色与深色模式均已在模拟器检查 | 真机上补 Dynamic Type、键盘与 Apple Pencil 专项验收 |
 | Deadline 操作 | 演示仓库的创建、完成、重开；真实 API 的 `GET`、`POST`、`complete`、`reopen` transport；分类与标签目录从 Calendar API 拉取 | 需要实际 Calendar API 地址与 bearer token 才能做端到端验证 |
 | Calendar 连接 | 设置页输入 API 根地址；token 只存 iPad Keychain；成功请求后才保存 | 当前没有在代码或文档中写入任何真实 token |
-| 设备端 AI | Apple Foundation Models 解析标题 / 分类 / 学科 / 标签 / 优先级，日期时间仍走正则；输出经校验与一次重试，失败回退规则解析；草稿可编辑后确认创建 | 课程归属（`course_id`）尚未接进提示词；真机与真实 Calendar 目录下的质量未验收 |
+| 设备端 AI | Apple Foundation Models 解析标题 / 分类 / 学科 / 标签 / 优先级，日期时间走正则、课程走规则；输出经校验与一次重试，失败回退规则解析；草稿可编辑后确认创建 | 真机与真实 Calendar 目录下的端到端未验收；一次重试的实际收益尚未实测 |
 | 本地提醒 | 用户主动开启后申请权限；定时项提前 15 分钟、全天项当天 09:00；最多安排 48 个未来任务；点击通知会路由到对应 Deadline | 尚未在真机授权状态下验收 |
 | Widget | App Group 快照、small/medium Today Widget、App 数据变化后刷新 timeline、点击后路由到对应 Deadline | 当前显示今日数量和最近一项；多项 Widget 仍待补充 |
-| 课程上下文 | `Deadline.courseID`、`GET /api/course-catalog`、`GET /api/course-schedule`、无日期窗口的未完成 Deadline 读取，以及纯函数的 `CourseContextBuilder`（唯一完整课程名直接命中；否则取当天已下课的课，按最近结束去重取三门，各带未完成作业 metadata 与下次上课时间） | 尚未接入界面与设备端模型；候选还没有任何消费方，`course_id` 目前恒为 nil。下一步是 Foundation Models 草稿（见 `CALENDAR_COURSE_DEADLINE_CONTEXT_REQUIREMENTS.md` §5） |
+| 课程归属 | `course_id` 已真正写入。`CourseContextBuilder` 出候选（全名或去掉 AS/ESL 与 L1A 等修饰后的短名字面命中；否则取当天已下课的课，未记过作业的排前面），`CourseResolver` 按四级规则推断（写了课程名 > 记作业的习惯 > 学科只有一门课 > 今天上过），草稿页显示课程与依据、可清除。论文类笔记不挂课程 | 记作业的习惯（卷子→物理、页码→CS 等）仍内置在客户端，应迁到后端 `courses.notes`——`GET /api/course-catalog` 目前不返回该字段。端到端需要真实 Calendar 凭据，演示仓库不提供课程接口 |
 | 缓存 | SwiftData 保存真实 Calendar Deadline，冷启动先显示缓存、联网成功后替换；App Group `UserDefaults` 供 Widget 使用 | 需要真实后端断网/恢复网络测试 |
 
 已在 iPad Pro 11-inch 模拟器验证：横屏浅色/深色三栏主界面、竖屏侧栏自动收起后的列表+详情双栏、分类和标签筛选与详情同步、设置页、AI 解析后的可编辑字段、AI 创建后的详情显示、完成/重开状态切换，以及 URL Scheme 跳转到指定 Deadline。Debug 构建已通过。真实 Calendar 后端、通知授权、Widget 添加到主屏幕和 M5 真机性能仍不能在没有用户凭据与设备连接的情况下宣称已验收。
 
-自动化验证：`AI0506RemindersTests` 在 iPad Pro 11-inch (M5) 模拟器通过 53/53，覆盖中文与英文自然语言解析、Deadline URL 路由、Calendar API transport（含课程目录、课表投影、无窗口的未完成读取与 `course_id` 写入）、目录回填、共用假数据一致性，以及课程候选构建。解析全部在设备上完成：Foundation Models 是端侧模型，规则解析是纯本地计算，两条路径都不发送用户输入到任何服务器。
+自动化验证：`AI0506RemindersTests` 在 iPad Pro 11-inch (M5) 模拟器通过 70/70，覆盖中文与英文自然语言解析、Deadline URL 路由、Calendar API transport（含课程目录、课表投影、无窗口的未完成读取与 `course_id` 写入）、目录回填、共用假数据一致性、课程候选构建与短名匹配、课程推断的四级规则，以及模型输出的校验分级。提示词本身的质量不靠单元测试保证——单元测试只挡结构问题，语义漂移要跑真实回归集（见 `CLAUDE.md`〈Foundation Models〉）。解析全部在设备上完成：Foundation Models 是端侧模型，规则解析是纯本地计算，两条路径都不发送用户输入到任何服务器。
 
 ## 1. 项目定位
 
@@ -42,7 +42,7 @@
 - 查看详情
 - 使用本地通知提醒
 - 使用 Widget 查看 Deadline
-- 使用模拟 AI 将自然语言解析为可编辑的 Deadline 草稿
+- 用设备端 AI 将自然语言解析为可编辑的 Deadline 草稿
 
 第一版不做：
 
@@ -346,9 +346,9 @@ POST /api/deadlines
 - 根据最新到期时间重新安排本地通知。
 - 以服务端返回 Deadline 为最终结果。
 
-## 9. 模拟 AI 功能
+## 9. AI 功能
 
-第一版就实现完整的 AI 前端，但暂时不连接真实 AI API。
+第一版先做完整的 AI 前端、用模拟解析占位；现已接入**设备端** Apple Foundation Models。
 
 ### 用户流程
 
@@ -401,21 +401,22 @@ DeadlineDraft
 
 以后接入真实 AI 时，只替换解析器和 API 层，不重做整个界面。
 
-### AI 真实接入预留
+### 真实接入（已完成，方案与原计划不同）
 
-后续建议使用：
+原计划走「iPad App → Calendar 后端 AI Proxy → 云端 AI API」，**这条路已经不做了**。
+实际采用设备端 Apple Foundation Models：
 
 ```text
 iPad App
     ↓
-Calendar 后端 AI Proxy
-    ↓
-真实 AI API
+Apple Foundation Models（设备端，iPadOS 26+）
 ```
 
-API Key 不能放入 iPad App。
+好处是不需要 API Key、不需要后端改动，用户输入不离开这台 iPad；代价是上下文窗口只有
+4096 token（连输出一起算），且模型能力弱于云端大模型，需要把确定性的判断从模型手里拿走
+（日期走正则、课程走规则），并对模型输出做校验与重试。详见 `CLAUDE.md` 的〈Foundation Models〉。
 
-真实 AI 必须返回结构化 JSON，并经过：
+模型输出必须经过：
 
 - JSON schema 校验
 - 日期和时区校验
@@ -579,14 +580,20 @@ Reminders 的 AI 是“输入 → 结构化 Deadline 草稿 → 用户确认”�
 - 横竖屏、深色模式、Dynamic Type、键盘、Apple Pencil。
 - 11 英寸 iPad Pro 真机性能测试。
 
-### Phase 6：真实 AI
+### Phase 6：真实 AI（设备端，大部分已完成）
 
-- 后端 AI Proxy。
-- 结构化 JSON 输出。
-- Category 和 Tag 匹配。
-- 置信度和缺失字段确认。
-- API Key 隔离。
-- 限流和错误处理。
+已完成：
+
+- 设备端 Apple Foundation Models 接入（`@Generable` 结构化输出）。
+- Category / Subject / Tag 的合法性校验与两级处理（编造名字重试一次，标签直接丢弃）。
+- 三档置信度、模型不可用时回退规则解析。
+- 课程归属：字面命中 / 记法规则 / 学科唯一课程 / 今天上过，四级确定性推断。
+
+未完成：
+
+- 真实 Calendar 凭据下的端到端验收（演示仓库不提供课程接口，模拟器验不了）。
+- 记作业的习惯规则仍内置在客户端，应迁到后端 `courses.notes`。
+- 重试机制的实际收益尚未实测（触发率与修正率）。
 
 ## 15. 第一阶段验收标准
 
