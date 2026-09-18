@@ -20,6 +20,11 @@ final class DeadlineStore {
     var isDemoMode = true
     var syncNote: String?
     private var pendingDeadlineID: String?
+    /// 每次 refresh 领一个号。冷启动的演示 refresh 和 `.task` 里恢复真实连接后的
+    /// refresh 会并发跑，两者都要写 `deadlines`；没有这个号的话，先发起、后返回的
+    /// 那个会把真实数据覆盖成演示数据，而且此时 `isDemoMode` 已经是 false，
+    /// 演示数据还会被写进真实的离线缓存。
+    private var refreshGeneration = 0
 
     init(repository: any DeadlineRepository, offlineCache: DeadlineOfflineCache = .shared) {
         self.repository = repository
@@ -77,11 +82,16 @@ final class DeadlineStore {
     }
 
     func refresh() async {
+        refreshGeneration += 1
+        let generation = refreshGeneration
+        // 仓库可能在这次刷新进行中被换掉（连接 / 断开），所以整趟只认一开始拿到的那个。
+        let activeRepository = repository
         isLoading = true
-        defer { isLoading = false }
+        defer { if generation == refreshGeneration { isLoading = false } }
         do {
-            let catalog = try? await repository.fetchCatalog()
-            let fetchedDeadlines = try await repository.fetchDeadlines()
+            let catalog = try? await activeRepository.fetchCatalog()
+            let fetchedDeadlines = try await activeRepository.fetchDeadlines()
+            guard generation == refreshGeneration else { return }
             if let catalog, !catalog.categories.isEmpty {
                 categories = catalog.categories
                 availableTags = catalog.tags
@@ -100,6 +110,7 @@ final class DeadlineStore {
             errorMessage = nil
             syncNote = isDemoMode ? "演示工作区" : "已同步"
         } catch {
+            guard generation == refreshGeneration else { return }
             if deadlines.isEmpty {
                 errorMessage = error.localizedDescription
                 syncNote = nil
@@ -113,7 +124,10 @@ final class DeadlineStore {
     func create(_ draft: DeadlineDraft) async -> Bool {
         do {
             let created = try await repository.create(draft)
-            deadlines.insert(created, at: 0)
+            // API 返回的 DTO 里 category id 是占位的 "uncatalogued"、subject 只有 id
+            // 没有名字，得跟刷新走同一条回填路径，否则新建的这条在分类筛选里立刻消失、
+            // 学科名也是空的，要等下一次 refresh 才恢复。
+            deadlines.insert(contentsOf: applyCatalog(to: [created]), at: 0)
             SharedDeadlineCache.save(deadlines: deadlines)
             if !isDemoMode { offlineCache.replace(with: deadlines) }
             DeadlineNotificationScheduler.shared.scheduleIfPermitted(for: deadlines)

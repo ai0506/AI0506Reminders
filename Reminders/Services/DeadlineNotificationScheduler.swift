@@ -27,7 +27,10 @@ final class DeadlineNotificationScheduler {
     }
 
     func reschedule(_ deadlines: [Deadline]) async {
-        center.removePendingNotificationRequests(withIdentifiers: deadlines.map { identifierPrefix + $0.id })
+        // 必须按前缀清掉**所有**已排的截止提醒，不能只清当前数组里这些 id：
+        // 服务端删掉的、或这次同步窗口之外的 Deadline 已经不在数组里了，
+        // 它们的通知会留下来继续弹——用户看到一条早就不存在的提醒。
+        await removePendingDeadlineAlerts()
         let calendar = Calendar.current
         let candidates = deadlines
             .filter { !$0.isCompleted && $0.dueDate > .now }
@@ -60,6 +63,15 @@ final class DeadlineNotificationScheduler {
     }
 
     func removeAllDeadlineAlerts() {
-        center.removeAllPendingNotificationRequests()
+        Task { await removePendingDeadlineAlerts() }
+    }
+
+    /// 只动本 App 排的截止提醒（按 `identifierPrefix` 筛），
+    /// 不用 `removeAllPendingNotificationRequests()` 一把梭。
+    private func removePendingDeadlineAlerts() async {
+        let pending = await center.pendingNotificationRequests()
+        let ours = pending.map(\.identifier).filter { $0.hasPrefix(identifierPrefix) }
+        guard !ours.isEmpty else { return }
+        center.removePendingNotificationRequests(withIdentifiers: ours)
     }
 }

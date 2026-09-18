@@ -7,18 +7,25 @@ struct DeadlineWidgetEntry: TimelineEntry {
 }
 
 struct DeadlineWidgetProvider: TimelineProvider {
-    func placeholder(in context: Context) -> DeadlineWidgetEntry { fallback }
-    func getSnapshot(in context: Context, completion: @escaping (DeadlineWidgetEntry) -> Void) { completion(entry()) }
+    // 画廊里的占位和预览可以用示例数据，真实的 timeline 不行。
+    func placeholder(in context: Context) -> DeadlineWidgetEntry { sample }
+    func getSnapshot(in context: Context, completion: @escaping (DeadlineWidgetEntry) -> Void) {
+        completion(context.isPreview ? sample : entry())
+    }
     func getTimeline(in context: Context, completion: @escaping (Timeline<DeadlineWidgetEntry>) -> Void) {
         completion(Timeline(entries: [entry()], policy: .after(.now.addingTimeInterval(30 * 60))))
     }
 
+    /// 读不到快照就显示空态。绝不能回落到示例数据——那会让主屏上出现
+    /// 用户从来没建过的"提交研究计划书"，看起来像真的。
     private func entry() -> DeadlineWidgetEntry {
-        guard let snapshot = SharedDeadlineCache.load() else { return fallback }
+        guard let snapshot = SharedDeadlineCache.load() else {
+            return .init(date: .now, upcoming: [])
+        }
         return .init(date: snapshot.updatedAt, upcoming: snapshot.upcoming)
     }
 
-    private var fallback: DeadlineWidgetEntry {
+    private var sample: DeadlineWidgetEntry {
         .init(date: .now, upcoming: [
             .init(id: "demo-1", title: "提交研究计划书", dueDate: .now, allDay: false, category: "Research", colorHex: "#7F5FB5", priority: .high),
             .init(id: "demo-2", title: "完成光学复习", dueDate: .now.addingTimeInterval(86_400), allDay: true, category: "Academics", colorHex: "#655F58", priority: .default),
@@ -36,7 +43,10 @@ struct DeadlineWidgetView: View {
             HStack {
                 Text("未来截止事项").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
                 Spacer()
-                Text("最近 3 项").font(.caption2).foregroundStyle(.secondary)
+                if !entry.upcoming.isEmpty {
+                    // 表头写实际条数，不写死"最近 3 项"——小尺寸只显示一条时那是假的。
+                    Text("\(entry.upcoming.count) 项").font(.caption2).foregroundStyle(.secondary)
+                }
             }
             if entry.upcoming.isEmpty {
                 ContentUnavailableView("未来暂无截止事项", systemImage: "checkmark.circle")
@@ -46,13 +56,18 @@ struct DeadlineWidgetView: View {
                     Text("另有 \(entry.upcoming.count - 1) 项即将到期").font(.caption2).foregroundStyle(.secondary)
                 }
             } else {
+                // 中号是多行的，每行必须各自可点。整块共用一个 widgetURL 的话，
+                // 点第二、三行也只会跳到第一条。
                 ForEach(entry.upcoming, id: \.id) { item in
-                    DeadlineWidgetRow(item: item, compact: true)
+                    Link(destination: RemindersRoute.deadlineURL(id: item.id)) {
+                        DeadlineWidgetRow(item: item, compact: true)
+                    }
                 }
             }
         }
         .containerBackground(for: .widget) { RemindersTheme.paper }
-        .widgetURL(entry.upcoming.first.map { RemindersRoute.deadlineURL(id: $0.id) })
+        // 小尺寸整块只有一个点击目标，只有它用 widgetURL。
+        .widgetURL(family == .systemSmall ? entry.upcoming.first.map { RemindersRoute.deadlineURL(id: $0.id) } : nil)
     }
 }
 
