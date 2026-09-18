@@ -328,6 +328,30 @@ private struct AIDraftEditor: View {
                         }.labelsHidden()
                     }
                     Divider()
+                    // 课程是**只读归属**，不是第四个导航维度（Frontend_spec §18.4）：
+                    // 这里只说明这条作业被挂到了哪门课、凭什么挂的，用户能清除但不能
+                    // 在这里翻整本课程目录——course_id 只能来自 Calendar 的课程目录。
+                    if let name = result.courseName {
+                        DraftField(title: "课程") {
+                            HStack(spacing: 8) {
+                                VStack(alignment: .trailing, spacing: 2) {
+                                    Text(name)
+                                    if let basis = result.courseBasis {
+                                        Text(basis)
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                                Button { clearCourse() } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundStyle(.secondary)
+                                }
+                                .buttonStyle(.borderless)
+                                .accessibilityLabel("清除关联课程")
+                            }
+                        }
+                        Divider()
+                    }
                 }
                 DraftField(title: "截止") {
                     DatePicker("截止", selection: $result.draft.dueDate, displayedComponents: result.draft.allDay ? .date : [.date, .hourAndMinute])
@@ -361,7 +385,23 @@ private struct AIDraftEditor: View {
         }
         .onChange(of: result.draft.category) { _, category in
             if result.draft.subject?.categoryID != category.id { result.draft.subject = nil }
+            // 后端要求 course_id 只能挂在 Academics 且与 subject_id 一致，
+            // 换到别的分类后课程必须跟着走，否则提交时才吃 400。
+            if category.kind != "academics" { clearCourse() }
         }
+        .onChange(of: result.draft.subject) { _, _ in
+            // 换了学科，原来那门课多半就对不上了。这里不猜新课程，交还给用户。
+            clearCourse()
+        }
+    }
+}
+
+private extension AIDraftEditor {
+    func clearCourse() {
+        guard result.draft.courseID != nil else { return }
+        result.draft.courseID = nil
+        result.courseName = nil
+        result.courseBasis = nil
     }
 }
 

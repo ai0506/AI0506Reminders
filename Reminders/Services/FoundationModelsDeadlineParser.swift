@@ -63,6 +63,8 @@ final class FoundationModelsDeadlineParser {
         categories: [DeadlineCategory],
         tags: [DeadlineTag],
         subjects: [DeadlineSubject],
+        courseContext: CourseContext = .none,
+        courseCatalog: [Course] = [],
         now: Date = .now
     ) async throws -> AIParseResult {
         if let unavailable = Self.availability { throw unavailable }
@@ -84,11 +86,13 @@ final class FoundationModelsDeadlineParser {
             let proposal = try await session.respond(to: prompt, generating: DraftProposal.self).content
             switch Validator.validate(proposal, catalog: catalog) {
             case .accepted(let checked):
-                return assemble(checked, input: input, catalog: catalog, now: now)
+                return assemble(checked, input: input, catalog: catalog,
+                                courseContext: courseContext, courseCatalog: courseCatalog, now: now)
             case .rejected(let complaint):
                 // 重试上限之外不再等第二轮推理，把能用的部分留下比整条丢掉好。
                 guard attempt < Self.maxRetries else {
-                    return assemble(Validator.salvage(proposal, catalog: catalog), input: input, catalog: catalog, now: now)
+                    return assemble(Validator.salvage(proposal, catalog: catalog), input: input, catalog: catalog,
+                                    courseContext: courseContext, courseCatalog: courseCatalog, now: now)
                 }
                 attempt += 1
                 prompt = complaint
@@ -100,16 +104,45 @@ final class FoundationModelsDeadlineParser {
         LanguageModelSession(instructions: PromptBuilder.instructions)
     }
 
-    /// 把模型的语义判断和正则的时间判断合成草稿。
+    /// 把模型的语义判断、正则的时间判断和规则推出的课程合成草稿。
     private func assemble(
         _ checked: CheckedProposal,
         input: String,
         catalog: PromptCatalog,
+        courseContext: CourseContext,
+        courseCatalog: [Course],
         now: Date
     ) -> AIParseResult {
         let timing = MockAIDeadlineParser.timing(in: input, now: now)
         let title = checked.title.isEmpty ? MockAIDeadlineParser.fallbackTitle(from: input) : checked.title
-        let category = checked.category ?? catalog.categories.first ?? DeadlineCategory.all[0]
+
+        let named: Course? = if case .direct(let candidate) = courseContext { candidate.course } else { nil }
+        let candidates: [CourseCandidate] = if case .contextual(let list) = courseContext { list } else { [] }
+
+        // 论文类笔记不挂课程。模型会把「论文 Introduction 完成」也往「ESL 1层 雅思写作」
+        // 上挂（都涉及写作），挂上之后下面那条「有课程就是课业」又会把分类顶成 Academics，
+        // 于是一条科研事项被整条判错。用户写了课程名时不受此限——「经济学的论文」
+        // 是 AS经济 的课业。
+        let resolution = (named == nil && ResearchMarkers.matches(input))
+            ? .unresolved
+            : CourseResolver.resolve(input: input, named: named,
+                                     modelSubjectName: checked.subject?.name,
+                                     catalog: courseCatalog, candidates: candidates,
+                                     subjects: catalog.subjects)
+
+        // 推出了课程就必然是课业：后端要求 course_id 只能挂在 Academics 上。
+        var category = checked.category ?? catalog.categories.first ?? DeadlineCategory.all[0]
+        if resolution.course != nil, let academics = catalog.categories.first(where: { $0.kind == "academics" }) {
+            category = academics
+        }
+
+        // 记作业的习惯可以推翻模型给的学科：「卷子」就是物理，不管模型判成了什么。
+        var subject = checked.subject
+        if let name = resolution.subjectName, let matched = catalog.subject(named: name) {
+            subject = matched
+        }
+        // 后端硬约束：非 academics 分类下 subject_id 与 course_id 必须为空，否则 400。
+        let isAcademic = category.kind == "academics"
 
         return AIParseResult(
             originalText: input.trimmingCharacters(in: .whitespacesAndNewlines),
@@ -119,14 +152,15 @@ final class FoundationModelsDeadlineParser {
                 dueDate: timing.date,
                 allDay: timing.isAllDay,
                 category: category,
-                // 后端硬约束：非 academics 分类下 subject_id 必须为空，否则 400。
-                subject: category.kind == "academics" ? checked.subject : nil,
-                courseID: nil,
+                subject: isAcademic ? subject : nil,
+                courseID: isAcademic ? resolution.course?.id : nil,
                 tags: checked.tags,
                 priority: checked.priority
             ),
             // 时间没解析出来时不该显得很有把握——那是草稿里最容易错的一格。
-            confidence: timing.wasExplicit ? checked.confidence : min(checked.confidence, 0.7)
+            confidence: timing.wasExplicit ? checked.confidence : min(checked.confidence, 0.7),
+            courseName: isAcademic ? resolution.course?.name : nil,
+            courseBasis: isAcademic ? resolution.basis?.explanation : nil
         )
     }
 }

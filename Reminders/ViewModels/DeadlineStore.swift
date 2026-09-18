@@ -26,6 +26,12 @@ final class DeadlineStore {
     /// 演示数据还会被写进真实的离线缓存。
     private var refreshGeneration = 0
     private let aiParser = FoundationModelsDeadlineParser()
+    /// 课程上下文的本地副本，`prewarmAI()` 时取回。空着也能用，只是推不出 course_id。
+    private var courseCatalog: [Course] = []
+    private var courseOccurrences: [CourseOccurrence] = []
+    private var courseworkDeadlines: [Deadline] = []
+    /// 课程与「今天」的时区锚点一律是上海，不是设备时区。
+    private static let shanghai = TimeZone(identifier: "Asia/Shanghai") ?? .current
     /// 模型不可用或这次回退到本地规则时给用户的一句说明；正常走通时为 nil。
     var aiNote: String?
 
@@ -160,9 +166,32 @@ final class DeadlineStore {
     }
 
     /// AI 面板出现时就调，别等用户点「分析这段话」。
-    /// 首次推理要加载模型，那段成本正好用用户打字的几秒吃掉。
+    /// 首次推理要加载模型，那段成本正好用用户打字的几秒吃掉；课程上下文也一并在
+    /// 这段时间里取回来，免得解析时再等三个请求。
     func prewarmAI() {
         aiParser.prewarm()
+        Task { await loadCourseContext() }
+    }
+
+    /// 课程上下文只有 AI 创建用得上，所以不在冷启动的 refresh 里取，等 AI 面板打开再说。
+    ///
+    /// 三个请求全部失败也只是让 `course_id` 保持 nil，草稿其余部分照常——课程是增强，
+    /// 不是必需品。演示仓库不提供这些接口（协议给了返回空的默认实现），所以演示模式下
+    /// 这里自然就是空的。
+    private func loadCourseContext() async {
+        guard !isDemoMode else { return }
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = Self.shanghai
+        let today = Date()
+        let start = calendar.startOfDay(for: today)
+        let end = calendar.date(byAdding: .day, value: 7, to: start) ?? start
+
+        // 顺序取，不用 async let：`DeadlineRepository` 不是 Sendable，并发派三个请求
+        // 过不了 Swift 6 的并发检查。这段跑在用户打字的时候，串行也不会被察觉。
+        courseCatalog = (try? await repository.fetchCourseCatalog()) ?? []
+        // 课表要往后取一周：候选要带「下一次上课」，只取今天是算不出来的。
+        courseOccurrences = (try? await repository.fetchCourseSchedule(from: start, to: end)) ?? []
+        courseworkDeadlines = (try? await repository.fetchOpenDeadlinesForCourseContext()) ?? []
     }
 
     /// 设备端模型优先，失败一律回退到本地规则解析。
@@ -173,11 +202,19 @@ final class DeadlineStore {
     func parseAI(_ input: String) async -> AIParseResult {
         aiNote = nil
         do {
+            let context = CourseContextBuilder().build(
+                input: input,
+                catalog: courseCatalog,
+                occurrences: courseOccurrences,
+                openDeadlines: courseworkDeadlines
+            )
             return try await aiParser.parse(
                 input: input,
                 categories: categories,
                 tags: availableTags,
-                subjects: subjects
+                subjects: subjects,
+                courseContext: context,
+                courseCatalog: courseCatalog
             )
         } catch {
             if let unavailable = error as? FoundationModelsDeadlineParser.Unavailable {

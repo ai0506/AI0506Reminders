@@ -143,6 +143,21 @@ enum PromptBuilder {
             lines.append("Tags: \(catalog.tags.map(\.name).joined(separator: ", "))")
         }
 
+        // 记作业的习惯：只告诉模型这些写法指向哪个**学科**，不让它选课程。
+        // 课程由 `CourseResolver` 推——给模型课程候选会锚定它的分类判断，而课程本来
+        // 就能确定性地推出来。学科给对了，课程自然就出来了。
+        let habits = CourseHabit.builtIn.filter { catalog.subject(named: $0.subjectName) != nil }
+        if !habits.isEmpty {
+            lines.append("")
+            lines.append("How this student's coursework usually looks:")
+            for habit in habits {
+                lines.append("- \(habit.wording) → \(habit.subjectName)")
+            }
+            for name in CourseHabit.rarelyAssignsHomework where catalog.subject(named: name) != nil {
+                lines.append("- \(name) almost never sets homework, so do not route a vague note to it.")
+            }
+        }
+
         lines.append("")
         // 标签只是**解析边界**，让原文里的换行和引号不至于和提示词结构混淆。
         //

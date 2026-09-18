@@ -857,9 +857,14 @@ plus      → "新建截止事项"
 - 切换分类后必须清空不匹配的学科。
 - Calendar 的 Course（课程）**不是一个可浏览的层级**：侧栏、筛选、列表行与 Widget 都不出现课程，
   也不提供按课程分组或筛选的入口。
-- 例外是 AI 草稿确认页与 Deadline 详情：课程在那里作为**只读的归属信息**出现（草稿页可改可清空），
-  用于让用户看清模型凭什么把这条作业挂到某门课上。`course_id` 只能取自 `GET /api/course-catalog`，
-  不得由用户自由输入。
+- 例外是 AI 草稿确认页：课程在那里作为**只读的归属信息**出现，同时显示挂上去的依据
+  （「原文里提到了这门课」「按你记这门课作业的习惯」「这个学科只有这一门课」「今天上过这门课」），
+  用户能一眼看出凭什么挂到这门课上。
+- 草稿页**只能清除课程，不提供课程选择器**。给一个全课程下拉就等于把课程做成了可浏览的层级，
+  与上一条冲突；而且推错时清空比改选更省事。`course_id` 只能由规则从课程目录推出，
+  不接受用户自由输入。
+- 切换分类到非 Academics、或切换学科时必须连带清空课程：后端要求 `course_id` 只能挂在
+  Academics 且与 `subject_id` 一致，残留的课程要等提交才吃 400。
 - `course_id` 必须与 `subject_id` 一致且分类为 Academics，否则后端返回 400；换学科时同时更新或显式清空课程。
 
 ## 18.5 AI 创建
@@ -1105,7 +1110,8 @@ xcodebuild -project AI0506Reminders.xcodeproj -scheme AI0506Reminders -destinati
 | `TagPicker` | 没有 5 个标签的上限，超过后要等提交才由后端返回 400 | 客户端未实现后端硬约束 | 待处理 |
 | 减少动态效果 | 尚未在代码中显式读取 `accessibilityReduceMotion` | 目前仅使用系统默认过渡 | 待处理 |
 | Widget | 只有 Today（未来事项）Widget，规划中的 Upcoming / Overdue Widget 未实现 | 分阶段实施，Phase 5 未完成 | 待处理 |
-| AI 草稿的课程归属 | `course_id` 恒为 nil | 课程候选已算好（`CourseContextBuilder`）但还没接进提示词与草稿页 | 待做（下一步） |
+| AI 草稿的课程归属 | 记作业习惯（卷子→物理、页码→CS 等）内置在客户端 | `courses` 表有 `notes` 字段，但 `GET /api/course-catalog` 不返回它，暂时放不到后端 | 已接受（待后端补字段后迁移） |
+| AI 课程链路的端到端 | 只有单元测试覆盖 | 演示仓库不提供课程接口，模拟器验不了；需要真实 Calendar 凭据 | 待验收 |
 | AI 标签质量 | 模型会选清单里语义最近的标签，演示目录没有 Homework 时会退而选 exam | 演示工作区的标签目录比真实 Calendar 目录小 | 已接受（演示模式限制） |
 | 真机验收 | 通知授权、Widget 添加到主屏、Dynamic Type、Apple Pencil、性能均未在 11 英寸 iPad Pro 真机验收 | 缺少真机与真实 Calendar 凭据 | 待处理 |
 

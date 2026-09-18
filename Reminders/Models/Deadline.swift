@@ -98,6 +98,12 @@ struct AIParseResult: Hashable {
     var originalText: String
     var draft: DeadlineDraft
     var confidence: Double
+    /// 草稿里的课程叫什么、凭什么挂上去，给确认页显示。
+    ///
+    /// 存成现成的文案而不是解析出来的类型：这个文件被 Widget target 一起编译，
+    /// 不能引用 `Reminders/Services` 里的东西（见 CLAUDE.md）。
+    var courseName: String?
+    var courseBasis: String?
 }
 
 enum DeadlineFilter: Hashable, Identifiable {
