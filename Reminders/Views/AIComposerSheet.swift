@@ -299,13 +299,13 @@ private struct AIDraftEditor: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
+            // 这里曾经有一行「解析置信度 90%」。去掉了：那个数字是模型自评的，
+            // 实测基本只在 0.9 / 0.7 之间跳，既说不出哪一格可能错，也不随证据变化。
+            // 要给用户的是「凭什么这么填、该检查哪一项」，不是一个百分比。
             HStack {
                 Text("草稿")
                     .font(.title3.weight(.semibold))
                 Spacer()
-                Text("解析置信度 \(Int(result.confidence * 100))%")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
             }
             .frame(height: 28)
 

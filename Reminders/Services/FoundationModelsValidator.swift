@@ -7,7 +7,6 @@ struct CheckedProposal {
     var subject: DeadlineSubject?
     var tags: [DeadlineTag]
     var priority: DeadlinePriority
-    var confidence: Double
     var reason: String
 }
 
@@ -67,7 +66,6 @@ enum Validator {
             subject: category.kind == "academics" ? subject : nil,
             tags: usableTags(proposal.tagNames, catalog: catalog),
             priority: proposal.priority.model,
-            confidence: proposal.certainty.confidence,
             reason: proposal.reason
         ))
     }
@@ -83,8 +81,6 @@ enum Validator {
             subject: resolved?.kind == "academics" && subject?.categoryID == resolved?.id ? subject : nil,
             tags: usableTags(proposal.tagNames, catalog: catalog),
             priority: proposal.priority.model,
-            // 兜底过的结果不该显得有把握。
-            confidence: min(proposal.certainty.confidence, 0.5),
             reason: proposal.reason
         )
     }

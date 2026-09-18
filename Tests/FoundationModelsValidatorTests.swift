@@ -34,8 +34,7 @@ struct FoundationModelsValidatorTests {
         category: String = "Academics",
         subject: String? = nil,
         tags: [String] = [],
-        priority: PriorityProposal = .normal,
-        certainty: Certainty = .high
+        priority: PriorityProposal = .normal
     ) -> DraftProposal {
         DraftProposal(
             title: title,
@@ -43,7 +42,6 @@ struct FoundationModelsValidatorTests {
             subjectName: subject,
             tagNames: tags,
             priority: priority,
-            certainty: certainty,
             reason: "测试"
         )
     }
@@ -174,16 +172,17 @@ struct FoundationModelsValidatorTests {
 
     // MARK: - 兜底
 
-    @Test("重试用完后兜底：分类回退到第一个，置信度不得再显得有把握")
-    func salvageFallsBackWithoutPretendingToBeSure() {
+    /// 兜底的规矩是「能查到的留下，查不到的丢掉，**绝不猜**」。
+    /// 这里三样都查不到或对不上：分类 "Study"、学科 "Chemistry"、标签 "Reading"。
+    @Test("重试用完后兜底：查不到的值一律丢掉，不拿它们硬填")
+    func salvageDropsWhatItCannotResolve() {
         let salvaged = Validator.salvage(
-            proposal(category: "Study", subject: "Chemistry", tags: ["Homework", "Reading"], certainty: .high),
+            proposal(category: "Study", subject: "Chemistry", tags: ["Homework", "Reading"]),
             catalog: catalog
         )
         #expect(salvaged.category?.id == "cat-academics")
         #expect(salvaged.subject == nil)
         #expect(salvaged.tags.map(\.id) == ["tag-homework"])
-        #expect(salvaged.confidence <= 0.5)
     }
 
     // MARK: - 提示词

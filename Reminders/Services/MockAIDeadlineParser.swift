@@ -29,8 +29,7 @@ enum MockAIDeadlineParser {
                 subject: category.kind == "academics" ? subject : nil,
                 tags: selectedTags,
                 priority: priority
-            ),
-            confidence: timing.wasExplicit ? 0.92 : 0.76
+            )
         )
     }
 

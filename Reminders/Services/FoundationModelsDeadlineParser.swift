@@ -157,8 +157,6 @@ final class FoundationModelsDeadlineParser {
                 tags: checked.tags,
                 priority: checked.priority
             ),
-            // 时间没解析出来时不该显得很有把握——那是草稿里最容易错的一格。
-            confidence: timing.wasExplicit ? checked.confidence : min(checked.confidence, 0.7),
             courseName: isAcademic ? resolution.course?.name : nil,
             courseBasis: isAcademic ? resolution.basis?.explanation : nil
         )

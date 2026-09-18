@@ -23,7 +23,6 @@ struct DraftProposal {
     var tagNames: [String]
 
     var priority: PriorityProposal
-    var certainty: Certainty
 
     @Guide(description: "一句完整的中文，说明你依据原文里的哪些词做出判断")
     var reason: String
@@ -38,21 +37,6 @@ enum PriorityProposal {
         case .normal: .default
         case .high: .high
         case .low: .low
-        }
-    }
-}
-
-/// 不让模型自评 0–1 的小数：端侧模型给出的浮点置信度基本是 0.85/0.9 这种
-/// 没有信息量的值。三档映射到 `AIParseResult.confidence` 就够界面用了。
-@Generable
-enum Certainty {
-    case medium, high, low
-
-    var confidence: Double {
-        switch self {
-        case .high: 0.9
-        case .medium: 0.7
-        case .low: 0.5
         }
     }
 }
