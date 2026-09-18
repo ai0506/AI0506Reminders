@@ -12,6 +12,7 @@
 		0BF4BB72E243FA9D3B205E3D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 12176A406C3B0F3FAD23CC88 /* Assets.xcassets */; };
 		188E760DF7332E728383DF7D /* MockAIDeadlineParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 673C787B2FF2ACBC34B4B9BB /* MockAIDeadlineParserTests.swift */; };
 		2BB57D5F5117DC040BDC67F0 /* RemindersRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9100E27396EAC44549AB4250 /* RemindersRoute.swift */; };
+		30CAF4085BF5E4BAFCB9295D /* CalendarAPIRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DBA3F61CCD82C7A0E81B2A9 /* CalendarAPIRepositoryTests.swift */; };
 		39A2CE97377BF6A1210F2375 /* DeadlineOfflineCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = C047551A98A5FC433E3E433B /* DeadlineOfflineCache.swift */; };
 		460976E2C02E3DC5D5FEC706 /* CalendarAPIRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EDAFE8F959B61C62437F0EE /* CalendarAPIRepository.swift */; };
 		4AEE2AD6F2724A776B900C5D /* RemindersAppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B5BB8CB0469AE1E82F4602C /* RemindersAppDelegate.swift */; };
@@ -27,7 +28,7 @@
 		C169E0A2DE7B2FB57D95FA04 /* DeadlineNotificationScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5163A3E73B050CF76C625589 /* DeadlineNotificationScheduler.swift */; };
 		D2363C384B521738467C2610 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4279C6E999208AFF84D3688D /* DesignSystem.swift */; };
 		D3D867E57564CA89B72F8AE0 /* DeadlineStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A86714864F544D9BD9B9A98A /* DeadlineStore.swift */; };
-		EC659A6D889A28B095AE0BED /* AI0506 Reminders Widgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 08DFFA1FFD1FDE5037A71B0F /* AI0506 Reminders Widgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		EC659A6D889A28B095AE0BED /* AI0506RemindersWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 08DFFA1FFD1FDE5037A71B0F /* AI0506RemindersWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		F73C0A3C520462C24F9E1649 /* Deadline.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC4C9170FF19D737AE67AFD6 /* Deadline.swift */; };
 		F9D0170A3976284793CD072C /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 498730BAF37E618D2097465C /* ContentView.swift */; };
 		F9EE66BB161065E902DC8BC3 /* WidgetDeadlineSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0135C076F0C45DFEA95EEBA1 /* WidgetDeadlineSnapshot.swift */; };
@@ -58,7 +59,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				EC659A6D889A28B095AE0BED /* AI0506 Reminders Widgets.appex in Embed Foundation Extensions */,
+				EC659A6D889A28B095AE0BED /* AI0506RemindersWidgets.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -67,7 +68,7 @@
 
 /* Begin PBXFileReference section */
 		0135C076F0C45DFEA95EEBA1 /* WidgetDeadlineSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetDeadlineSnapshot.swift; sourceTree = "<group>"; };
-		08DFFA1FFD1FDE5037A71B0F /* AI0506 Reminders Widgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "AI0506 Reminders Widgets.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
+		08DFFA1FFD1FDE5037A71B0F /* AI0506RemindersWidgets.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = AI0506RemindersWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		0B5BB8CB0469AE1E82F4602C /* RemindersAppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemindersAppDelegate.swift; sourceTree = "<group>"; };
 		12176A406C3B0F3FAD23CC88 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		2D4BFB8C053734F1C7E6D8E3 /* AppSettingsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettingsSheet.swift; sourceTree = "<group>"; };
@@ -76,6 +77,7 @@
 		4279C6E999208AFF84D3688D /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
 		498730BAF37E618D2097465C /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		5163A3E73B050CF76C625589 /* DeadlineNotificationScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeadlineNotificationScheduler.swift; sourceTree = "<group>"; };
+		5DBA3F61CCD82C7A0E81B2A9 /* CalendarAPIRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarAPIRepositoryTests.swift; sourceTree = "<group>"; };
 		5EDAFE8F959B61C62437F0EE /* CalendarAPIRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarAPIRepository.swift; sourceTree = "<group>"; };
 		62E10B26A69FE8019ABB0204 /* AI0506RemindersApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AI0506RemindersApp.swift; sourceTree = "<group>"; };
 		673C787B2FF2ACBC34B4B9BB /* MockAIDeadlineParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockAIDeadlineParserTests.swift; sourceTree = "<group>"; };
@@ -88,7 +90,7 @@
 		A86714864F544D9BD9B9A98A /* DeadlineStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeadlineStore.swift; sourceTree = "<group>"; };
 		BFA2CA17B4F62CCE6ABFAD4A /* DeadlineEditorSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeadlineEditorSheet.swift; sourceTree = "<group>"; };
 		C047551A98A5FC433E3E433B /* DeadlineOfflineCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeadlineOfflineCache.swift; sourceTree = "<group>"; };
-		CB0FF8E635E6B9F841366D15 /* AI0506 Reminders.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "AI0506 Reminders.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		CB0FF8E635E6B9F841366D15 /* AI0506Reminders.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = AI0506Reminders.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CCFC3FC316F67AB1DB1CA101 /* DeadlineWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeadlineWidget.swift; sourceTree = "<group>"; };
 		CDB97682D6DB3EE0C527436B /* RemindersWidgets.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RemindersWidgets.entitlements; sourceTree = "<group>"; };
 		D34DD3ED22B1B50EA24887A1 /* DeadlineRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeadlineRepository.swift; sourceTree = "<group>"; };
@@ -119,9 +121,9 @@
 		1F129770C1C81C442178F7DF /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				CB0FF8E635E6B9F841366D15 /* AI0506 Reminders.app */,
+				CB0FF8E635E6B9F841366D15 /* AI0506Reminders.app */,
 				8FB1308339D740AB07D06169 /* AI0506RemindersTests.xctest */,
-				08DFFA1FFD1FDE5037A71B0F /* AI0506 Reminders Widgets.appex */,
+				08DFFA1FFD1FDE5037A71B0F /* AI0506RemindersWidgets.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -196,6 +198,7 @@
 		EBD6AB6C95C66BBF1BC9A621 /* Tests */ = {
 			isa = PBXGroup;
 			children = (
+				5DBA3F61CCD82C7A0E81B2A9 /* CalendarAPIRepositoryTests.swift */,
 				673C787B2FF2ACBC34B4B9BB /* MockAIDeadlineParserTests.swift */,
 			);
 			path = Tests;
@@ -247,7 +250,7 @@
 			packageProductDependencies = (
 			);
 			productName = AI0506Reminders;
-			productReference = CB0FF8E635E6B9F841366D15 /* AI0506 Reminders.app */;
+			productReference = CB0FF8E635E6B9F841366D15 /* AI0506Reminders.app */;
 			productType = "com.apple.product-type.application";
 		};
 		A897810F46EC7D9DE434F63C /* AI0506RemindersWidgets */ = {
@@ -264,7 +267,7 @@
 			packageProductDependencies = (
 			);
 			productName = AI0506RemindersWidgets;
-			productReference = 08DFFA1FFD1FDE5037A71B0F /* AI0506 Reminders Widgets.appex */;
+			productReference = 08DFFA1FFD1FDE5037A71B0F /* AI0506RemindersWidgets.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
@@ -277,6 +280,12 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					82DB187C37F8F5FD2788CFA9 = {
+						DevelopmentTeam = "";
+					};
+					A6E299160483EA5A5FB9067C = {
+						DevelopmentTeam = "";
+					};
+					A897810F46EC7D9DE434F63C = {
 						DevelopmentTeam = "";
 					};
 				};
@@ -330,6 +339,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				30CAF4085BF5E4BAFCB9295D /* CalendarAPIRepositoryTests.swift in Sources */,
 				188E760DF7332E728383DF7D /* MockAIDeadlineParserTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -379,7 +389,6 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = Widgets/RemindersWidgets.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 9T9HC6TGZ4;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Widgets/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -464,7 +473,6 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = Widgets/RemindersWidgets.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 9T9HC6TGZ4;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Widgets/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -561,7 +569,6 @@
 				CODE_SIGN_ENTITLEMENTS = Reminders/Reminders.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 9T9HC6TGZ4;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Reminders/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -583,7 +590,6 @@
 				CODE_SIGN_ENTITLEMENTS = Reminders/Reminders.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 9T9HC6TGZ4;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Reminders/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
