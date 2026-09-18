@@ -98,8 +98,13 @@ struct LocalDraftRulesTests {
         #expect(LocalDraftRules.priority(for: text) == .high)
     }
 
-    /// 没有明确证据就是普通优先级。V1 让模型判时，五个用例全被标成了 high。
-    @Test(arguments: ["写完物理卷子", "明天下午三点交作业", "计算机练习册 25 26 27页"])
+    /// 没有明确证据就是普通优先级。
+    ///
+    /// 最后那句英文是真实撞到的：模型路径还在自己判优先级时，它在模拟器里连着两次
+    /// 被标成「高」，而句子里没有任何紧急字样。现在优先级由这里决定，钉住它。
+    @Test(arguments: ["写完物理卷子", "明天下午三点交作业", "计算机练习册 25 26 27页",
+                      "Finish the physics worksheet tomorrow at 3pm",
+                      "Book the travel tickets on Sunday"])
     func noEvidenceMeansDefaultPriority(text: String) {
         #expect(LocalDraftRules.priority(for: text) == .default)
     }

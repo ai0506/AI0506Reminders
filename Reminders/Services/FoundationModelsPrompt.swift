@@ -5,9 +5,13 @@ import FoundationModels
 
 /// 模型要填的表。
 ///
-/// 枚举 case 的顺序**不是随意排的**：端侧模型有很强的「选第一个」偏置
-/// （探针里 priority 一度五个用例全是 high），所以每个枚举的第一个 case
-/// 必须是最安全的默认值。改顺序前先重跑一遍探针。
+/// 这里**没有 priority、没有自评置信度、没有日期**：这三样都有确定的字面证据可依，
+/// 交给模型只是在制造噪声。priority 归 `LocalDraftRules`（只认明确的紧急字样，
+/// 否则一律普通），时间归 `MockAIDeadlineParser.timing` 的正则。
+///
+/// 将来如果再往这张表里加 `@Generable` 枚举，注意 case 顺序**不能随意排**：
+/// 端侧模型有很强的「选第一个」偏置——priority 还在这里时，探针一度五个用例全是 high。
+/// 第一个 case 必须是最安全的默认值，改顺序前先重跑探针。
 @Generable
 struct DraftProposal {
     @Guide(description: "任务标题，只保留要做的事，去掉所有时间词，不超过 30 字")
@@ -22,23 +26,8 @@ struct DraftProposal {
     @Guide(description: "逐字取自 Tags 清单里的名字。没有贴切的就返回空数组——宁可不选，也不要造一个清单外的词。最多两个。", .maximumCount(2))
     var tagNames: [String]
 
-    var priority: PriorityProposal
-
     @Guide(description: "一句完整的中文，说明你依据原文里的哪些词做出判断")
     var reason: String
-}
-
-@Generable
-enum PriorityProposal {
-    case normal, high, low
-
-    var model: DeadlinePriority {
-        switch self {
-        case .normal: .default
-        case .high: .high
-        case .low: .low
-        }
-    }
 }
 
 // MARK: - 喂给模型的目录

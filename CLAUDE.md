@@ -11,6 +11,9 @@
 - 不要只给方案。风险可控就直接改代码、跑构建、跑测试。
 - 不确定的信息先读代码、读 `Calendar/API_DOC.md` 或实际跑一次，不要凭印象猜。
 - 这个项目由 Codex 和 Claude Code 共同开发（`updates.md` 里的 `[CodeX]` 前缀）。用户提到的「同事」指 Codex。
+- **同时可能有另一个 Claude Code 会话在改这个仓库**，它的记录前缀同样是 `[ClaudeCode]`，
+  所以光看前缀分不出是不是自己写的。发现工作区多了没印象的提交时，先 `git log` 看一眼再说，
+  **不要默认那就是 Codex**——我照前缀猜过一次，猜错了。
 
 ## 这是什么
 
@@ -170,7 +173,14 @@ session，重试就是要让模型看见自己刚才的回答。
 `MockAIDeadlineParser.timing` 的正则，确定性的事不给模型做。
 
 **`@Generable` 枚举的第一个 case 有强偏置。** 模型倾向于选第一个，所以每个枚举的首项必须是
-最安全的默认值（`normal` / `medium`）。改顺序前先重跑探针。
+最安全的默认值。改顺序前先重跑探针。当年就是 priority 的首项排错，五个用例全判成 high。
+
+**优先级、置信度、日期都不交给模型。** 这三样都有确定的字面证据可依，交给模型只是在制造噪声：
+priority 会无中生有（「Finish the physics worksheet tomorrow at 3pm」毫无紧急字样也给「高」，
+模拟器上连着两次），自评置信度基本只在 0.9 / 0.7 之间跳、还和对错反着走。现在
+priority 走 `LocalDraftRules`（只认明确的紧急字样），时间走 `MockAIDeadlineParser.timing`
+的正则，置信度整个删掉了——**别再加回来**，也别给 `DraftConfidence` 加百分比属性。
+顺带的好处是输出字段更少：撑爆 4096 窗口的往往是输出而不是 prompt（见 `Scripts/ai-probe/README.md`）。
 
 **分类清单只给名字，模型会把所有东西都归进第一个。** 真实目录上实测 10 个输入 10 个
 Academics，连「续费 iCloud」都算学业。每个分类必须带一句用途说明。

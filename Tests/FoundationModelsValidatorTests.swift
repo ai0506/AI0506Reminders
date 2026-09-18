@@ -33,15 +33,13 @@ struct FoundationModelsValidatorTests {
         title: String = "物理作业",
         category: String = "Academics",
         subject: String? = nil,
-        tags: [String] = [],
-        priority: PriorityProposal = .normal
+        tags: [String] = []
     ) -> DraftProposal {
         DraftProposal(
             title: title,
             categoryName: category,
             subjectName: subject,
             tagNames: tags,
-            priority: priority,
             reason: "测试"
         )
     }

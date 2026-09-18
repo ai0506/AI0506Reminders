@@ -155,7 +155,10 @@ final class FoundationModelsDeadlineParser {
                 subject: isAcademic ? subject : nil,
                 courseID: isAcademic ? resolution.course?.id : nil,
                 tags: checked.tags,
-                priority: checked.priority
+                // 优先级不问模型：它会无中生有。实测「Finish the physics worksheet
+                // tomorrow at 3pm」这种毫无紧急字样的句子也给「高」。规则只认明确的
+                // 紧急字样，其余一律普通——宁可让用户自己抬，也不要草稿页上半数都是高优先。
+                priority: LocalDraftRules.priority(for: input)
             ),
             courseName: isAcademic ? resolution.course?.name : nil,
             courseBasis: isAcademic ? resolution.basis?.explanation : nil

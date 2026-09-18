@@ -6,7 +6,6 @@ struct CheckedProposal {
     var category: DeadlineCategory?
     var subject: DeadlineSubject?
     var tags: [DeadlineTag]
-    var priority: DeadlinePriority
     var reason: String
 }
 
@@ -65,7 +64,6 @@ enum Validator {
             category: category,
             subject: category.kind == "academics" ? subject : nil,
             tags: usableTags(proposal.tagNames, catalog: catalog),
-            priority: proposal.priority.model,
             reason: proposal.reason
         ))
     }
@@ -80,7 +78,6 @@ enum Validator {
             category: resolved,
             subject: resolved?.kind == "academics" && subject?.categoryID == resolved?.id ? subject : nil,
             tags: usableTags(proposal.tagNames, catalog: catalog),
-            priority: proposal.priority.model,
             reason: proposal.reason
         )
     }
