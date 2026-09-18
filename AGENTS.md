@@ -20,6 +20,10 @@
 
 用户提到的「同事」指 Claude Code，它在 `updates.md` 里的前缀是 `[ClaudeCode]`。
 
+`updates.md` 记「这次改了什么」，`lessons.md` 记「从中抽象出的、能带去别的项目的原则」。
+改动暴露的是通用问题时往 `lessons.md` 追加一条（格式见那份文件末尾）；
+只发生过一次、高度依赖本项目细节的，写进 `CLAUDE.md` 的〈坑〉就够了。三者不要互相复述。
+
 ## 红线
 
 - 工程文件由 XcodeGen 从 `project.yml` 生成。**不要手改 `.xcodeproj/project.pbxproj`**，下次生成会被覆盖。

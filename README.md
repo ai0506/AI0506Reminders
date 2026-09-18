@@ -9,6 +9,19 @@ AI0506 Calendar 本地project位置：
 
 如果需要可以查看相关接口或者代码
 
+## 文档
+
+| 文件 | 内容 |
+|---|---|
+| `REMINDERS_PLAN.md` | 项目定位、分阶段计划、当前实施状态 |
+| `Frontend_spec.md` | 界面与交互的验收条件，§22 是已知技术债 |
+| `CLAUDE.md` / `AGENTS.md` | 在这个仓库里干活的约定与踩过的坑 |
+| `lessons.md` | 从这些事故抽象出的通用工程原则 |
+| `updates.md` | 改动记录（只追加） |
+| `Scripts/ai-probe/README.md` | 设备端模型的回归探针怎么跑 |
+
+`private/` 不被 git 追踪，隐私数据（AI 回归集等）放那里。
+
 ## 已实现
 
 - iPad 横屏三栏、竖屏导航、浅色/深色模式

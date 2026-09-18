@@ -2,6 +2,8 @@
 
 给在这个仓库里工作的 Claude Code 看的。**这份文件不复述其它文档**，只做三件事：把「该读哪一份」指清楚、把这个项目和 Calendar 后端的契约点讲明白、把踩过的坑写下来。内容失效时就地改掉，不要往下堆。
 
+这里写的是**在这个仓库里具体该怎么做**。同一批事故抽象成的通用原则在 `lessons.md`，那一层是给以后做别的项目用的，两边不要互相复述。
+
 ## 沟通方式
 
 - 默认使用简体中文回复，代码注释与面向用户的文案也用中文。
@@ -66,6 +68,7 @@ xcodebuild -project AI0506Reminders.xcodeproj -scheme AI0506Reminders -destinati
 | 项目定位、分阶段计划、当前实施状态 | `REMINDERS_PLAN.md` |
 | 怎么跑起来、怎么连 Calendar | `README.md` |
 | 改过什么、为什么那样改 | `updates.md`（只追加） |
+| 从事故抽象出的通用工程原则 | `lessons.md`（可以带去别的项目的那一层） |
 | Deadline / 分类 / 科目 / 标签的**字段语义与校验规则** | `../Calendar/API_DOC.md` |
 | 跨客户端共同的视觉与稳定性原则 | `../Calendar/production/FRONTEND_SPEC.md` |
 | Calendar 的整体架构与业务规则 | `../Calendar/PROJECT_SPEC.md` |
@@ -101,6 +104,9 @@ xcodebuild -project AI0506Reminders.xcodeproj -scheme AI0506Reminders -destinati
 - 现有注释里记的多数是踩过的坑（为什么不用那个显而易见的做法），**别删**。
 
 ## 坑
+
+下面每条都是实际栽过的。新踩的坑先写到这里，要具体、可执行；等它出现第二次、
+或者明显不只是这个项目的问题，再抽象一条进 `lessons.md`。
 
 **`RemindersTheme.accent` 不能跟随 `label`。** iPad 的 `List` 拿全局 tint 当选中行填充色，深色模式下 `label` 是白的，于是白底白字、选中行的标题直接消失。现在固定用 `systemBlue`。改 accent 前先在深色模式里选中一行看看。
 
@@ -209,6 +215,8 @@ few-shot 给最高优先级、标签定义写足边界和反例。
 ```
 
 `YYMMDDHHmm` 是当前时间（两位年月日时分），与现有条目格式一致。写清楚**改了什么、为什么、验证了什么、什么没做到**。这个仓库的变更记录是技术性的，不是流水账；不要留「文件已更新」这类没有信息量的行。
+
+一条改动改完之后，如果它暴露的是个**通用**问题（换个项目也会踩），在 `lessons.md` 追加一条；格式见那份文件末尾。只发生过一次、且高度依赖本项目细节的，留在上面的〈坑〉里就够了。
 
 ## 跨项目改动
 
