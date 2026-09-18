@@ -55,31 +55,112 @@ struct MockDeadlineRepository: DeadlineRepository {
     }
 }
 
+/// 演示工作区的数据来自 `Resources/sample-workspace.json`——那是 Calendar 与 Reminders
+/// 共用的假数据，权威副本在 Calendar 仓库，用 `Scripts/sync-fixtures.sh` 同步过来。
+///
+/// 这样做的好处是：本地起一个真的 Calendar（`npm run db:seed-fake` + `npm run dev`）之后，
+/// 演示工作区和真实后端看到的是同一批事项，来回切换时界面是连续的；
+/// 分类名也不会再出现「文档写 Personal、库里其实叫 Leisure」那种两边各写一份导致的漂移。
 enum DemoData {
-    // 标签与学科同样是后端目录里的名字，保持英文原名与 Calendar 的科目色板一致。
-    static let tags: [DeadlineTag] = [
-        .init(id: "exam", name: "exam"), .init(id: "urgent", name: "urgent"),
-        .init(id: "writing", name: "writing"), .init(id: "review", name: "review")
-    ]
-    static let subjects: [DeadlineSubject] = [
-        .init(id: "sub-math", name: "Math", categoryID: "academics", colorHex: "#FF3B30"),
-        .init(id: "sub-physics", name: "Physics", categoryID: "academics", colorHex: "#32ADE6"),
-        .init(id: "sub-cs", name: "CS", categoryID: "academics", colorHex: "#30B855")
-    ]
-
-    static let deadlines: [Deadline] = {
-        let calendar = Calendar.current
-        let now = Date()
-        func date(_ day: Int, _ hour: Int, _ minute: Int = 0) -> Date {
-            calendar.date(byAdding: .day, value: day, to: calendar.date(bySettingHour: hour, minute: minute, second: 0, of: now)!)!
+    private struct Fixture: Decodable {
+        struct Category: Decodable {
+            let id: String, name: String, color: String, kind: String, archived: Int
         }
-        return [
-            .init(id: "proposal", title: "提交研究计划书", detail: "包含修改后的方法部分与一页时间线。", dueDate: date(0, 16), allDay: false, category: .all[1], subject: nil, tags: [tags[2], tags[3]], priority: .high, status: .open, updatedAt: now),
-            .init(id: "algorithms", title: "复习算法题集", detail: "明天课程前检查第 4 道证明题。", dueDate: date(1, 10), allDay: false, category: .all[0], subject: subjects[2], tags: [tags[3]], priority: .default, status: .open, updatedAt: now),
-            .init(id: "seminar", title: "准备研讨课笔记", detail: "", dueDate: date(2, 9), allDay: true, category: .all[1], subject: nil, tags: [], priority: .low, status: .open, updatedAt: now),
-            .init(id: "physics", title: "完成光学复习", detail: "", dueDate: date(4, 18), allDay: false, category: .all[0], subject: subjects[1], tags: [tags[0]], priority: .default, status: .open, updatedAt: now),
-            .init(id: "overdue", title: "发送项目反馈", detail: "", dueDate: date(-1, 17), allDay: false, category: .all[2], subject: nil, tags: [tags[1]], priority: .high, status: .overdue, updatedAt: now),
-            .init(id: "completed", title: "阅读实验简介", detail: "", dueDate: date(-2, 12), allDay: false, category: .all[1], subject: nil, tags: [], priority: .default, status: .completed, updatedAt: now)
-        ]
+        struct Subject: Decodable {
+            let id: String, name: String, categoryId: String, color: String, active: Int
+        }
+        struct Tag: Decodable { let id: String, name: String }
+        struct Item: Decodable {
+            let id: String, title: String, description: String
+            let dueOffsetDays: Int
+            let dueTime: String?
+            let allDay: Bool
+            let category: String
+            let subjectId: String?
+            let priority: DeadlinePriority
+            let completed: Bool
+            let tagIds: [String]
+        }
+        let categories: [Category]
+        let subjects: [Subject]
+        let tags: [Tag]
+        let deadlines: [Item]
+    }
+
+    /// 后端按上海时间判定「今天」和「逾期」，假数据也必须照这个锚点展开，
+    /// 否则演示工作区和本地 Calendar 会对不上一天。
+    private static let shanghai = TimeZone(identifier: "Asia/Shanghai") ?? .current
+
+    private static let fixture: Fixture? = {
+        guard let url = Bundle.main.url(forResource: "sample-workspace", withExtension: "json"),
+              let data = try? Data(contentsOf: url) else { return nil }
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        return try? decoder.decode(Fixture.self, from: data)
     }()
+
+    /// 只暴露未归档的分类，跟 `GET /api/categories` 一致。
+    static var categories: [DeadlineCategory] {
+        guard let fixture else { return DeadlineCategory.all }
+        return fixture.categories
+            .filter { $0.archived == 0 }
+            .map { .init(id: $0.id, name: $0.name, colorHex: $0.color, kind: $0.kind) }
+    }
+
+    /// 只暴露启用中的学科，跟 `GET /api/subjects` 一致。
+    static var subjects: [DeadlineSubject] {
+        guard let fixture else { return [] }
+        return fixture.subjects
+            .filter { $0.active == 1 }
+            .map { .init(id: $0.id, name: $0.name, categoryID: $0.categoryId, colorHex: $0.color) }
+    }
+
+    static var tags: [DeadlineTag] {
+        guard let fixture else { return [] }
+        return fixture.tags.map { .init(id: $0.id, name: $0.name) }
+    }
+
+    static var deadlines: [Deadline] {
+        guard let fixture else { return [] }
+        let tagsByID = Dictionary(uniqueKeysWithValues: fixture.tags.map { ($0.id, DeadlineTag(id: $0.id, name: $0.name)) })
+        // 按名字找分类时连归档的一起找：真实数据里就是存着归档分类的名字，
+        // 演示工作区照样复现「它不在侧栏里、按分类筛不到」这个既有缺口。
+        let categoriesByName = Dictionary(uniqueKeysWithValues: fixture.categories.map {
+            ($0.name, DeadlineCategory(id: $0.id, name: $0.name, colorHex: $0.color, kind: $0.kind))
+        })
+        let subjectsByID = Dictionary(uniqueKeysWithValues: fixture.subjects.map {
+            ($0.id, DeadlineSubject(id: $0.id, name: $0.name, categoryID: $0.categoryId, colorHex: $0.color))
+        })
+        let now = Date()
+
+        return fixture.deadlines.compactMap { item in
+            guard let category = categoriesByName[item.category],
+                  let dueDate = dueDate(for: item, now: now) else { return nil }
+            let status: DeadlineStatus = item.completed ? .completed : (dueDate < now ? .overdue : .open)
+            return Deadline(
+                id: item.id,
+                title: item.title,
+                detail: item.description,
+                dueDate: dueDate,
+                allDay: item.allDay,
+                category: category,
+                subject: item.subjectId.flatMap { subjectsByID[$0] },
+                tags: item.tagIds.compactMap { tagsByID[$0] },
+                priority: item.priority,
+                status: status,
+                updatedAt: now
+            )
+        }
+    }
+
+    private static func dueDate(for item: Fixture.Item, now: Date) -> Date? {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = shanghai
+        guard let day = calendar.date(byAdding: .day, value: item.dueOffsetDays, to: now) else { return nil }
+        guard !item.allDay else { return calendar.startOfDay(for: day) }
+        let parts = (item.dueTime ?? "09:00").split(separator: ":")
+        let hour = Int(parts.first ?? "9") ?? 9
+        let minute = parts.count > 1 ? (Int(parts[1]) ?? 0) : 0
+        return calendar.date(bySettingHour: hour, minute: minute, second: 0, of: day)
+    }
 }

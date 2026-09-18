@@ -67,8 +67,10 @@ enum MockAIDeadlineParser {
         }
     }
 
+    /// 按标签**名字**匹配，不按 id。id 是后端生成的（可能是 "tag-exam"，也可能是 UUID），
+    /// 拿它做 key 在真实数据上一条都命中不了；名字才是用户会写进句子里的那个词。
     private static func tagAliases(for tag: DeadlineTag) -> [String] {
-        switch tag.id {
+        switch tag.name.lowercased() {
         case "exam": ["exam", "考试"]
         case "urgent": ["urgent", "紧急"]
         case "writing": ["writing", "写作"]

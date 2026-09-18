@@ -920,6 +920,11 @@ Reminders 是 AI0506 Calendar 的第二客户端，必须遵守 `Calendar/produc
 - **时区锚点是 `Asia/Shanghai`**：后端的「今天」「逾期」按上海时间计算。界面分组与「今天 / 已逾期」筛选不得直接用设备时区得出与后端不一致的结论。
 - **全天 Deadline 的逾期规则**：截止日**当天仍为 `open`**，次日（上海时间）才变 `overdue`。客户端不得把全天项在当天就标红。
 - **语言**：后端分类与学科名称是英文（Academics / Research / AI0506 Project / Personal / Tech；Math / Physics / CS / English / Other Subjects）。中文界面直接显示后端原名，不在客户端私自翻译或改写——翻译会让 iPad 与 Web 对同一条数据显示不同名称。需要中文名时应在 Calendar 后端统一改名。
+- **假数据两个项目共用一份**：`../Calendar/fixtures/sample-workspace.json` 是唯一权威副本，
+  Reminders 用 `Scripts/sync-fixtures.sh` 同步到 `Reminders/Resources/sample-workspace.json`，
+  演示工作区直接读它。这样本地起一个真的 Calendar（`npm run db:seed-fake` + `npm run dev`）之后，
+  演示模式和真实后端看到的是同一批事项，来回切换界面是连续的。
+  分类 / 学科 / 标签的名字与配色以 Calendar 的 **迁移脚本** 为准，不以任何文档为准。
 - **数据窗口**：`GET /api/deadlines` 当前只取 `-30 天 ~ +120 天` 且 `include_completed=true`。「全部截止事项」实际是这个窗口，空态文案不得让用户误以为账户里真的没有任何数据。
 - **写入契约以 Calendar 为准**：`POST` / `PUT` / `complete` / `reopen` / `DELETE`（软删除）均已在 `Calendar/API_DOC.md` 冻结；complete 与 reopen 幂等，重复调用返回当前对象。
 

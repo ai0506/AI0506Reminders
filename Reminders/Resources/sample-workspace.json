@@ -1,0 +1,76 @@
+{
+  "$schema-note": [
+    "Calendar 与 Reminders 共用的假数据，唯一权威副本。",
+    "改这里，不要在任一端各自维护一份。Reminders 的副本由它的 Scripts/sync-fixtures.sh 拉取。",
+    "",
+    "categories / subjects 必须与 migrations 里的种子一致——它们是既有数据，不是本文件发明的。",
+    "seed-fake.mjs 会核对：fixture 里引用的 category / subject 在库中不存在就直接报错，",
+    "避免再次出现『文档写 Personal、库里其实叫 Leisure』这类漂移。",
+    "",
+    "deadlines 用相对天数而不是绝对日期，否则过几天『今天』视图就空了。",
+    "due_offset_days 相对当天（Asia/Shanghai），due_time 是 HH:mm，全天项为 null。"
+  ],
+
+  "categories": [
+    { "id": "cat-academics", "name": "Academics",      "color": "#655f58", "sort_order": 1, "kind": "academics", "archived": 0 },
+    { "id": "cat-research",  "name": "Research",       "color": "#7f5fb5", "sort_order": 5, "kind": "normal",    "archived": 0 },
+    { "id": "cat-project",   "name": "Projects",       "color": "#c07043", "sort_order": 6, "kind": "normal",    "archived": 0 },
+    { "id": "cat-personal",  "name": "Leisure",        "color": "#bd5f86", "sort_order": 7, "kind": "normal",    "archived": 0 },
+    { "id": "cat-other",     "name": "Tech",           "color": "#64748b", "sort_order": 8, "kind": "normal",    "archived": 0 },
+    { "id": "cat-physics",   "name": "Physics",        "color": "#0891b2", "sort_order": 2, "kind": "normal",    "archived": 1 }
+  ],
+
+  "subjects": [
+    { "id": "sub-math",    "name": "Math",           "category_id": "cat-academics", "color": "#ff3b30", "sort_order": 1, "active": 1 },
+    { "id": "sub-physics", "name": "Physics",        "category_id": "cat-academics", "color": "#32ade6", "sort_order": 2, "active": 1 },
+    { "id": "sub-cs",      "name": "CS",             "category_id": "cat-academics", "color": "#30b855", "sort_order": 3, "active": 1 },
+    { "id": "sub-english", "name": "English",        "category_id": "cat-academics", "color": "#ff9f0a", "sort_order": 4, "active": 1 },
+    { "id": "sub-other",   "name": "Other Subjects", "category_id": "cat-academics", "color": "#0a84ff", "sort_order": 5, "active": 1 }
+  ],
+
+  "tags": [
+    { "id": "tag-exam",    "name": "exam",    "color": "#ff3b30" },
+    { "id": "tag-urgent",  "name": "urgent",  "color": "#ff9f0a" },
+    { "id": "tag-writing", "name": "writing", "color": "#7f5fb5" },
+    { "id": "tag-review",  "name": "review",  "color": "#30b855" }
+  ],
+
+  "deadlines": [
+    { "id": "fake-proposal",  "title": "Submit research proposal", "description": "Revised methods section and a one-page timeline.",
+      "due_offset_days": 0,  "due_time": "16:00", "all_day": false, "category": "Research",  "subject_id": null,
+      "priority": "high",    "completed": false, "tag_ids": ["tag-writing", "tag-review"] },
+
+    { "id": "fake-algorithms", "title": "Review algorithm problem set", "description": "Check proof 4 before class.",
+      "due_offset_days": 1,  "due_time": "10:00", "all_day": false, "category": "Academics", "subject_id": "sub-cs",
+      "priority": "default", "completed": false, "tag_ids": ["tag-review"] },
+
+    { "id": "fake-deploy",     "title": "Ship the widget refresh fix", "description": "",
+      "due_offset_days": 1,  "due_time": "21:30", "all_day": false, "category": "Tech",      "subject_id": null,
+      "priority": "high",    "completed": false, "tag_ids": ["tag-urgent"] },
+
+    { "id": "fake-seminar",    "title": "Prepare seminar notes", "description": "",
+      "due_offset_days": 2,  "due_time": null,    "all_day": true,  "category": "Research",  "subject_id": null,
+      "priority": "low",     "completed": false, "tag_ids": [] },
+
+    { "id": "fake-optics",     "title": "Finish optics revision", "description": "",
+      "due_offset_days": 4,  "due_time": "18:00", "all_day": false, "category": "Academics", "subject_id": "sub-physics",
+      "priority": "default", "completed": false, "tag_ids": ["tag-exam"] },
+
+    { "id": "fake-dentist",    "title": "Book the dentist", "description": "",
+      "due_offset_days": 7,  "due_time": null,    "all_day": true,  "category": "Leisure",   "subject_id": null,
+      "priority": "default", "completed": false, "tag_ids": [] },
+
+    { "id": "fake-feedback",   "title": "Send project feedback", "description": "",
+      "due_offset_days": -1, "due_time": "17:00", "all_day": false, "category": "Projects",  "subject_id": null,
+      "priority": "high",    "completed": false, "tag_ids": ["tag-urgent"] },
+
+    { "id": "fake-briefing",   "title": "Read the lab briefing", "description": "",
+      "due_offset_days": -2, "due_time": "12:00", "all_day": false, "category": "Research",  "subject_id": null,
+      "priority": "default", "completed": true,  "tag_ids": [] },
+
+    { "id": "fake-archived-category", "title": "Optics past paper (archived category)",
+      "description": "挂在已归档的 Physics 分类下，专门用来暴露 Frontend_spec §22 记的那个缺口：GET /api/categories 不返回归档分类，客户端按分类名回填失败，这条会在所有分类筛选里消失。",
+      "due_offset_days": 3,  "due_time": null,    "all_day": true,  "category": "Physics",   "subject_id": null,
+      "priority": "default", "completed": false, "tag_ids": ["tag-exam"] }
+  ]
+}

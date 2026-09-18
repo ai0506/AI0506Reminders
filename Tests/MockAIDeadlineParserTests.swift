@@ -19,7 +19,7 @@ struct MockAIDeadlineParserTests {
 
         #expect(result.draft.title == "交实验报告")
         #expect(result.draft.category.name == "Research")
-        #expect(result.draft.tags.map(\.id) == ["exam", "urgent"])
+        #expect(result.draft.tags.map(\.name) == ["exam", "urgent"])
         #expect(result.draft.priority == .high)
         #expect(!result.draft.allDay)
         #expect(Calendar.current.component(.weekday, from: result.draft.dueDate) == 6)

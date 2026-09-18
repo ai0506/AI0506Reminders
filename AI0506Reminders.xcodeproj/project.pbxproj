@@ -18,6 +18,7 @@
 		4AEE2AD6F2724A776B900C5D /* RemindersAppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B5BB8CB0469AE1E82F4602C /* RemindersAppDelegate.swift */; };
 		52DC82BBA41A979DEF7168C9 /* RemindersRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9100E27396EAC44549AB4250 /* RemindersRoute.swift */; };
 		567F34B9727D1320887329D6 /* AI0506RemindersApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62E10B26A69FE8019ABB0204 /* AI0506RemindersApp.swift */; };
+		5DC99AFB5E10103432C85ACE /* SharedFixtureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A23C523ED590F8F0849D6487 /* SharedFixtureTests.swift */; };
 		631595FBCA1BE41B04E209C0 /* CalendarConnectionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33DDECDEC6BD60828DB50941 /* CalendarConnectionStore.swift */; };
 		7230CA7E6EAF87807F855C67 /* DeadlineWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCFC3FC316F67AB1DB1CA101 /* DeadlineWidget.swift */; };
 		7A2E650D47AFEF9170EDFD83 /* DeadlineEditorSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFA2CA17B4F62CCE6ABFAD4A /* DeadlineEditorSheet.swift */; };
@@ -29,6 +30,7 @@
 		D2363C384B521738467C2610 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4279C6E999208AFF84D3688D /* DesignSystem.swift */; };
 		D3D867E57564CA89B72F8AE0 /* DeadlineStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A86714864F544D9BD9B9A98A /* DeadlineStore.swift */; };
 		EC659A6D889A28B095AE0BED /* AI0506RemindersWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 08DFFA1FFD1FDE5037A71B0F /* AI0506RemindersWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		F6A7A697C05DA043E1FC77F1 /* sample-workspace.json in Resources */ = {isa = PBXBuildFile; fileRef = E4E59B8C2560255F61882B05 /* sample-workspace.json */; };
 		F73C0A3C520462C24F9E1649 /* Deadline.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC4C9170FF19D737AE67AFD6 /* Deadline.swift */; };
 		F9D0170A3976284793CD072C /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 498730BAF37E618D2097465C /* ContentView.swift */; };
 		F9EE66BB161065E902DC8BC3 /* WidgetDeadlineSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0135C076F0C45DFEA95EEBA1 /* WidgetDeadlineSnapshot.swift */; };
@@ -87,6 +89,7 @@
 		9100E27396EAC44549AB4250 /* RemindersRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemindersRoute.swift; sourceTree = "<group>"; };
 		93E685DCB9D343E5D4AEB7D5 /* AIComposerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIComposerSheet.swift; sourceTree = "<group>"; };
 		94A296E034BBDC5B0F479A91 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		A23C523ED590F8F0849D6487 /* SharedFixtureTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedFixtureTests.swift; sourceTree = "<group>"; };
 		A86714864F544D9BD9B9A98A /* DeadlineStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeadlineStore.swift; sourceTree = "<group>"; };
 		BFA2CA17B4F62CCE6ABFAD4A /* DeadlineEditorSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeadlineEditorSheet.swift; sourceTree = "<group>"; };
 		C047551A98A5FC433E3E433B /* DeadlineOfflineCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeadlineOfflineCache.swift; sourceTree = "<group>"; };
@@ -95,6 +98,7 @@
 		CDB97682D6DB3EE0C527436B /* RemindersWidgets.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RemindersWidgets.entitlements; sourceTree = "<group>"; };
 		D34DD3ED22B1B50EA24887A1 /* DeadlineRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeadlineRepository.swift; sourceTree = "<group>"; };
 		DC4C9170FF19D737AE67AFD6 /* Deadline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Deadline.swift; sourceTree = "<group>"; };
+		E4E59B8C2560255F61882B05 /* sample-workspace.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "sample-workspace.json"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -148,6 +152,7 @@
 				888451A09353A865C81F3F2B /* Reminders.entitlements */,
 				0B5BB8CB0469AE1E82F4602C /* RemindersAppDelegate.swift */,
 				7B8C7C2AB8CFA0B1BA3441D2 /* Models */,
+				B7B35BD40DA09C1CCD03D2FA /* Resources */,
 				5F63560499DADDA7617B0965 /* Services */,
 				483BDFCF6F18DB5943933A55 /* Theme */,
 				F7F8E09908C439E524E87B7E /* ViewModels */,
@@ -195,11 +200,20 @@
 			path = Models;
 			sourceTree = "<group>";
 		};
+		B7B35BD40DA09C1CCD03D2FA /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				E4E59B8C2560255F61882B05 /* sample-workspace.json */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
 		EBD6AB6C95C66BBF1BC9A621 /* Tests */ = {
 			isa = PBXGroup;
 			children = (
 				5DBA3F61CCD82C7A0E81B2A9 /* CalendarAPIRepositoryTests.swift */,
 				673C787B2FF2ACBC34B4B9BB /* MockAIDeadlineParserTests.swift */,
+				A23C523ED590F8F0849D6487 /* SharedFixtureTests.swift */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -317,6 +331,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				0BF4BB72E243FA9D3B205E3D /* Assets.xcassets in Resources */,
+				F6A7A697C05DA043E1FC77F1 /* sample-workspace.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -341,6 +356,7 @@
 			files = (
 				30CAF4085BF5E4BAFCB9295D /* CalendarAPIRepositoryTests.swift in Sources */,
 				188E760DF7332E728383DF7D /* MockAIDeadlineParserTests.swift in Sources */,
+				5DC99AFB5E10103432C85ACE /* SharedFixtureTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

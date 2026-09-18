@@ -69,6 +69,7 @@ xcodebuild -project AI0506Reminders.xcodeproj -scheme AI0506Reminders -destinati
 | Deadline / 分类 / 科目 / 标签的**字段语义与校验规则** | `../Calendar/API_DOC.md` |
 | 跨客户端共同的视觉与稳定性原则 | `../Calendar/production/FRONTEND_SPEC.md` |
 | Calendar 的整体架构与业务规则 | `../Calendar/PROJECT_SPEC.md` |
+| 分类 / 学科 / 标签的**真实名字与配色** | `../Calendar/migrations/*.sql`（**不是** `production/FRONTEND_SPEC.md`，见下） |
 
 `Frontend_spec.md` §22 是已知技术债清单。**不要因为那里已经有同类问题，就默认允许新增同类问题。**
 
@@ -84,6 +85,8 @@ xcodebuild -project AI0506Reminders.xcodeproj -scheme AI0506Reminders -destinati
 | `Shared/` | App 与 Widget 共用：App Group 快照、URL Scheme 路由。 |
 | `Widgets/` | WidgetKit extension。 |
 | `Tests/` | Swift Testing 用例。 |
+| `Reminders/Resources/sample-workspace.json` | **与 Calendar 共用的假数据**，权威副本在 Calendar 仓库，这里是 vendored 拷贝。 |
+| `Scripts/sync-fixtures.sh` | 从 `../Calendar/fixtures/` 拉取上面那份。 |
 
 ## 开发原则
 
@@ -106,6 +109,16 @@ xcodebuild -project AI0506Reminders.xcodeproj -scheme AI0506Reminders -destinati
 **后端返回的 Deadline 没有可用的分类 id。** `CalendarAPIRepository.DeadlineDTO.model` 把 category id 硬编码成 `"uncatalogued"`，真正的 id 靠 `DeadlineStore.applyCatalog` 用**分类名**回填。所以：分类一旦在 Calendar 侧被归档（`GET /api/categories` 就不返回它了），回填失败，那条 Deadline 会在所有分类筛选下消失。科目同理——`GET /api/subjects` 只返回 `active = 1` 的。动这块之前先想清楚归档 / 停用数据怎么办。
 
 **全天 Deadline 的逾期规则跟直觉相反。** 后端定义是「截止日**当天仍为 open**，次日按 `Asia/Shanghai` 才变 overdue」。而 `Deadline.isOverdue` 现在用 `dueDate < Date()`，全天项当天 00:00 一过就标红——这是已知不一致（`Frontend_spec.md` §22）。凡是判「今天」「逾期」的地方，时区锚点是 **Asia/Shanghai**，不是设备时区。
+
+**分类名以迁移脚本为准，不要照 `Calendar/production/FRONTEND_SPEC.md` §6 抄。** 那份文档写的是
+"AI0506 Project" 和 "Personal"，而 `migrations/0001` 里 `cat-project` 一直叫 **Projects**、
+`migrations/0003` 已经把 Personal 改名成 **Leisure**。我照文档写过一次，两个名字都是错的。
+数据库是真相，文档不是。
+
+**假数据别在 Reminders 这边改。** `Reminders/Resources/sample-workspace.json` 是 vendored 拷贝，
+权威副本在 `../Calendar/fixtures/sample-workspace.json`。改那边，然后跑 `Scripts/sync-fixtures.sh`。
+Calendar 的 `scripts/seed-fake.mjs` 会校验引用完整性（分类/学科/标签存不存在、非 academics 分类不能挂
+subject_id、标签不超 5 个），`SharedFixtureTests` 会盯着 `DeadlineCategory.all` 别和 fixture 漂移。
 
 **标签最多 5 个**，是后端硬约束。客户端目前没拦，超了要等提交才吃 400。
 

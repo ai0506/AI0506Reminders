@@ -33,14 +33,18 @@ struct DeadlineCategory: Identifiable, Codable, Hashable {
     var colorHex: String
     var kind: String = "normal"
 
-    /// 分类名与配色照抄 Calendar 后端的真实目录（见 `Calendar/production/FRONTEND_SPEC.md` §6）。
-    /// 分类是后端数据，不在 iPad 侧翻译——翻译会让同一条 Deadline 在 iPad 和 Web 上显示不同名字。
+    /// Widget target 用得到的兜底目录，必须与 `Resources/sample-workspace.json` 里未归档的分类一致
+    /// （`SharedFixtureTests` 会核对）。真实目录以 `GET /api/categories` 为准。
+    ///
+    /// 注意别照 `Calendar/production/FRONTEND_SPEC.md` §6 抄名字——那份文档写的是
+    /// "AI0506 Project" / "Personal"，而迁移 0001+0003 里实际叫 Projects / Leisure。
+    /// 数据库是真相，文档不是。
     static let all: [DeadlineCategory] = [
-        .init(id: "academics", name: "Academics", colorHex: "#655F58", kind: "academics"),
-        .init(id: "research", name: "Research", colorHex: "#7F5FB5"),
-        .init(id: "projects", name: "AI0506 Project", colorHex: "#C07043"),
-        .init(id: "leisure", name: "Personal", colorHex: "#BD5F86"),
-        .init(id: "tech", name: "Tech", colorHex: "#64748B")
+        .init(id: "cat-academics", name: "Academics", colorHex: "#655f58", kind: "academics"),
+        .init(id: "cat-research", name: "Research", colorHex: "#7f5fb5"),
+        .init(id: "cat-project", name: "Projects", colorHex: "#c07043"),
+        .init(id: "cat-personal", name: "Leisure", colorHex: "#bd5f86"),
+        .init(id: "cat-other", name: "Tech", colorHex: "#64748b")
     ]
 
     var tint: Color { Color(hex: colorHex) }
