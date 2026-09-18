@@ -38,9 +38,6 @@ actor FoundationModelsDeadlineParser {
         }
     }
 
-    /// 只用来预热模型权重，不参与真正的解析（解析每次开新的，见 `parse`）。
-    private var warmupSession: LanguageModelSession?
-
     nonisolated static var availability: Unavailable? {
         switch SystemLanguageModel.default.availability {
         case .available: nil
@@ -52,16 +49,10 @@ actor FoundationModelsDeadlineParser {
         }
     }
 
-    /// 在 AI 面板出现时就调，别等用户点「分析这段话」。
-    /// 首次推理要加载模型，那段成本正好用用户打字的几秒吃掉。
-    func prewarm() {
-        guard Self.availability == nil else { return }
-        // 预热加载的是模型权重，那是进程级的资源，不属于某一个 session——
-        // 所以这里预热的 session 和后面解析用的不是同一个，也不影响效果。
-        let session = warmupSession ?? makeSession()
-        warmupSession = session
-        session.prewarm()
-    }
+    // 这里原本有个 `prewarm()`，在面板出现时提前加载模型权重。删掉了：真机上那次加载
+    // 的压力是整机级的，**连系统虚拟键盘都会跟着卡**，而键盘是另一个进程——降优先级、
+    // 换执行上下文都没用。现在加载成本落在第一次 `parse` 里，那时用户正对着「正在分析」
+    // 这一屏等着。要加回来先读 `lessons.md` §32，并且必须在真机上量。
 
     func parse(
         input: String,

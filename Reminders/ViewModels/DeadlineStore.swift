@@ -29,7 +29,7 @@ final class DeadlineStore {
     /// 演示数据还会被写进真实的离线缓存。
     private var refreshGeneration = 0
     private let aiParser = FoundationModelsDeadlineParser()
-    /// 课程上下文的本地副本，`prewarmAI()` 时取回。空着也能用，只是推不出 course_id。
+    /// 课程上下文的本地副本，`prepareAIPanel()` 时取回。空着也能用，只是推不出 course_id。
     private var courseCatalog: [Course] = []
     private var courseOccurrences: [CourseOccurrence] = []
     private var courseworkDeadlines: [Deadline] = []
@@ -172,27 +172,23 @@ final class DeadlineStore {
     /// AI 面板出现时就调，别等用户点「分析这段话」。
     /// 首次推理要加载模型，那段成本正好用用户打字的几秒吃掉；课程上下文也一并在
     /// 这段时间里取回来，免得解析时再等三个请求。
-    /// 面板出现时启动预热和课程数据，但**都推迟到面板可交互之后**。
+    /// 面板出现时只取课程数据。**刻意不预热模型。**
     ///
-    /// 原来是面板一出现就同帧开工。真机上的表现是「刚进去卡一会儿、按钮没反应、
-    /// 输入框要点好久才能进去」——加载模型权重要抢 CPU 和内存带宽，而课程那三个请求
-    /// 的 JSON 解码全在主线程上（`DeadlineRepository` 是 `@MainActor`），
-    /// 正好和呈现动画、第一次点击撞在一起。开发机上这两件事都快得察觉不出。
+    /// 原本这里会在面板出现时调 `aiParser.prewarm()`，理由是「用户打字的那几秒正好
+    /// 用来加载模型」。真机上这个想法是错的：加载模型权重是几百 MB 的内存带宽加 ANE
+    /// 争用，压力是**整机级**的——用户报告的不只是这个 App 卡，**连系统虚拟键盘一起卡**。
+    /// 键盘是另一个进程，它卡就说明问题不在我们的主线程上，降优先级、挪执行上下文
+    /// 都治不了，唯一有效的办法是别在那一刻加载。
     ///
-    /// 这两件事都不是用户此刻需要的：他要先点输入框、先打字。所以延后一点再开始，
-    /// 并降到 `.utility` 优先级，让 UI 永远排在它们前面。预热仍然发生在用户打字的
-    /// 那几秒里，原来的好处没丢。
-    func prewarmAI() {
-        // 两个独立的 Task，不要串在一起：预热是模型侧的事，取课程上下文是网络的事，
-        // 谁也不该等谁。解析器现在是 actor，预热调用要 await 才能进去。
-        // 预热要延后：它是 CPU 和内存带宽的大头，撞在呈现动画和第一次点击上最疼。
-        Task(priority: .utility) {
-            try? await Task.sleep(for: .milliseconds(700))
-            await aiParser.prewarm()
-        }
-        // 课程数据**不延后**，只降优先级：它的大头是网络往返（挂起，不占线程），
-        // 延后反而会让「打开面板马上点分析」的时候课程还没到位，而课程归属正是
-        // 这个面板最有用的部分。改成记下这个 task，解析前等它一下（见 `parseAI`）。
+    /// 现在这段成本落在用户按下「分析这段话」之后——那里有「正在分析」这一屏，
+    /// 是一次**用户明确在等待**的等待，有进度指示、容忍度高得多。代价是第一次分析更慢。
+    /// 卡住的键盘比慢三秒的分析糟得多，所以这个交换是划算的。
+    ///
+    /// 想把预热加回来之前先读 `lessons.md` §32，并且必须在真机上量，开发机量不出来。
+    func prepareAIPanel() {
+        // 课程数据留着：它的大头是网络往返（挂起，不占线程，也不抢内存带宽），
+        // 跟上面那件事完全不是一回事。降到 `.utility` 让 UI 排在它前面就够了。
+        // 记下这个 task，解析前要等它一下（见 `parseAI`）。
         courseContextTask = Task(priority: .utility) { await loadCourseContext() }
     }
 

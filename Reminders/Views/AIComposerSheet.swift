@@ -44,8 +44,9 @@ struct AIComposerSheet: View {
             }
         }
         .presentationDetents([.large])
-        // 用户打字的这几秒正好用来加载模型，别等他点「分析这段话」才开始。
-        .task { store.prewarmAI() }
+        // 只在这里取课程数据。**不预热模型**——那次加载会让整台设备卡住，
+        // 连系统键盘一起卡，理由见 `DeadlineStore.prepareAIPanel()`。
+        .task { store.prepareAIPanel() }
     }
 
     private var stepTitle: String {
