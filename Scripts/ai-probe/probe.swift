@@ -7,8 +7,8 @@
 //   swift Scripts/ai-probe/probe.swift --source real    # 只跑真实标题
 //   swift Scripts/ai-probe/probe.swift --size           # 只量 prompt 长度，不调模型
 //
-// 数据集**不在仓库里**，默认读 ~/.ai0506/reminders/regression.json。
-// 为什么分开见同目录 README.md。
+// 数据集在 private/ai-probe/regression.json——文件在仓库目录里，但 private/ 整个
+// 在 .gitignore 里，不被追踪（跟 Calendar 的 production/ 一个路数）。为什么见 README.md。
 //
 // 这个文件只负责「怎么测」：加载数据、组装 prompt、跑多轮、打分、报告。
 // 「测什么」集中在下面 MARK: - 被测提示词 那一段，改提示词就改那里。
@@ -237,8 +237,8 @@ struct Args {
     var source: String?
     var sizeOnly = false
     var verbose = false
-    var path = FileManager.default.homeDirectoryForCurrentUser
-        .appending(path: ".ai0506/reminders/regression.json").path
+    /// 相对当前目录，也就是要求在仓库根目录跑。
+    var path = "private/ai-probe/regression.json"
 }
 
 func parseArgs() -> Args {
@@ -264,8 +264,9 @@ guard let raw = FileManager.default.contents(atPath: args.path) else {
     print("""
     找不到数据集：\(args.path)
 
-    回归集是私有的（真实课表、真实标题、教师姓名），所以不在仓库里。
-    照 Scripts/ai-probe/README.md 建一份，或用 --data 指向别处。
+    回归集是私有的（真实课表、真实标题、教师姓名），放在 private/ 下且不被 git 追踪，
+    所以换台机器 clone 下来是没有的。照 Scripts/ai-probe/README.md 重建一份，
+    或用 --data 指向别处。另外这个路径是相对的，要在仓库根目录跑。
     """)
     exit(1)
 }

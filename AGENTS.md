@@ -25,6 +25,7 @@
 - 工程文件由 XcodeGen 从 `project.yml` 生成。**不要手改 `.xcodeproj/project.pbxproj`**，下次生成会被覆盖。
 - 不引入 EventKit，不读写 Apple 日历 / Apple 提醒事项。
 - token、API 地址、任何凭据都不写进仓库里的任何文件，也不写进日志、错误信息和截图。
+- 隐私数据（真实标题、课表、教师姓名等第三方个人信息）只放 `private/`，那个目录不被 git 追踪；放之前先 `git check-ignore -v` 确认。
 - AI 一律是**设备端** Apple Foundation Models，不引入任何云端 AI、不放 API Key。
 - 不在 iPad 侧自行发明分类 / 科目 / 优先级的合法值，一律以 Calendar 后端目录为准。
 - AI 解析结果必须经用户确认才能创建 Deadline。
@@ -43,5 +44,6 @@
 这个项目在这上面栽过。
 
 回归集怎么跑见 `Scripts/ai-probe/README.md`：`swift Scripts/ai-probe/probe.swift`。
-**数据集是私有的，放在仓库外**（真实 Deadline 标题、真实课表、一位教师的姓名），
-跑出来的失败行同样不要贴进 `updates.md`、提交信息或 issue——写分数和结论就够了。
+**数据集是私有的，放在不被 git 追踪的 `private/` 下**（真实 Deadline 标题、真实课表、
+一位教师的姓名），跑出来的失败行同样不要贴进 `updates.md`、提交信息或 issue——
+写分数和结论就够了。

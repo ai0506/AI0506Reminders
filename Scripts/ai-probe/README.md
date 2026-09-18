@@ -16,20 +16,25 @@ swift Scripts/ai-probe/probe.swift --size       # 只量 prompt 长度，不打�
 在 Mac 上直接跑，不用模拟器（`FoundationModels` 在 macOS 上就能用，Apple Intelligence
 要已经下载完）。免费，所以该批量跑就批量跑。
 
-## 数据集不在仓库里
+## 数据集不被追踪
 
-默认读 `~/.ai0506/reminders/regression.json`，用 `--data` 可以指到别处。
+在 `private/ai-probe/regression.json`。`private/` 整个在 `.gitignore` 里——文件就在
+仓库目录下放着，但 git 看不见它，跟 Calendar 的 `production/` 一个路数。
+用 `--data` 可以指到别处；默认路径是相对的，所以要在仓库根目录跑。
 
-**它为什么不在这里**：那份文件是真实课表、真实 Deadline 标题和一位教师的姓名。
+**它为什么不能被追踪**：那份文件是真实课表、真实 Deadline 标题和一位教师的姓名。
 这是公开仓库，而 Calendar 的 migration 0014 明确把 `courses.teacher` 写成 NULL，
-理由就是教师姓名属于第三方个人信息。回归集的价值恰恰来自它是真的，所以只能放在仓库外。
+理由就是教师姓名属于第三方个人信息。回归集的价值恰恰来自它是真的。
 
 同样的道理：**不要把跑出来的失败行贴进 `updates.md`、提交信息或 issue**，
 写结论和分数就够了（「分类 47/56，5 条 Research 全错」）。
 
-数据集丢了可以用 MCP 的 calendar 工具重建：`calendar_list_deadlines` 取真实标题，
-期望值取数据库里的 `category` / `subject_id`，课表从 `GET /api/course-schedule` 拿。
-文件结构见 `probe.swift` 里的 `Dataset`，每个字段都有注释。
+往 `private/` 里放新东西之前先 `git check-ignore -v <路径>` 确认一遍，别靠记忆——
+忽略规则漏一个字符，文件就进版本库了，而这个仓库是公开的、推出去就撤不干净。
+
+数据集不进版本库，代价是**换台机器 clone 下来没有它**，得重建：用 MCP 的 calendar 工具，
+`calendar_list_deadlines` 取真实标题，期望值取数据库里的 `category` / `subject_id`，
+课表从 `GET /api/course-schedule` 拿。文件结构见 `probe.swift` 里的 `Dataset`，每个字段都有注释。
 
 ## 怎么读结果
 

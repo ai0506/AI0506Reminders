@@ -87,7 +87,8 @@ xcodebuild -project AI0506Reminders.xcodeproj -scheme AI0506Reminders -destinati
 | `Tests/` | Swift Testing 用例。 |
 | `Reminders/Resources/sample-workspace.json` | **与 Calendar 共用的假数据**，权威副本在 Calendar 仓库，这里是 vendored 拷贝。 |
 | `Scripts/sync-fixtures.sh` | 从 `../Calendar/fixtures/` 拉取上面那份。 |
-| `Scripts/ai-probe/` | 设备端模型的回归探针。改提示词后必跑，数据集在仓库外。 |
+| `Scripts/ai-probe/` | 设备端模型的回归探针。改提示词后必跑。 |
+| `private/` | **不被 git 追踪**（见 `.gitignore`）。隐私数据放这里，目前是 AI 回归集。 |
 
 ## 开发原则
 
@@ -130,6 +131,12 @@ subject_id、标签不超 5 个），`SharedFixtureTests` 会盯着 `DeadlineCat
 **SwiftData 模型加字段要考虑已装机的旧缓存。** 之前加 Subject 时是设成可选才让旧缓存自动迁移过去的。
 
 **token 只进 iPad 钥匙串。** 不写进源码、`project.yml`、README、`updates.md`、日志、错误信息和截图。错误提示也不要把原始响应体整个抛给用户。
+
+**隐私数据放 `private/`，那个目录不被 git 追踪。** 真实课表、真实 Deadline 标题、教师姓名
+都属于这一类——教师姓名是第三方个人信息，Calendar 的 migration 0014 专门把
+`courses.teacher` 写成 NULL 就是这个理由。这是公开仓库，推出去会被缓存和索引，
+`git reset` 撤不干净。往 `private/` 放东西前先 `git check-ignore -v <路径>` 确认，
+别靠记忆；同样别把这些内容摘抄进 `updates.md`、提交信息或 issue。
 
 ### Foundation Models
 
@@ -186,8 +193,8 @@ few-shot 给最高优先级、标签定义写足边界和反例。
 4. 改了 Widget 或通知：在模拟器里实际触发一次，不要只看代码。
 5. 改了 AI 提示词或校验规则：**跑真实回归集**——`swift Scripts/ai-probe/probe.swift`，
    用法与数据集位置见 `Scripts/ai-probe/README.md`。单元测试挡不住提示词的语义漂移，
-   它只能挡住结构问题。回归集是私有的（真实标题、课表、教师姓名），放在仓库外，
-   跑出来的失败行也不要贴进 `updates.md` 或提交信息，写分数和结论就够了。
+   它只能挡住结构问题。回归集是私有的（真实标题、课表、教师姓名），放在**不被追踪的
+   `private/`** 下，跑出来的失败行也不要贴进 `updates.md` 或提交信息，写分数和结论就够了。
 6. 往 `updates.md` 追加一条（见下）。
 7. 事实变了就同步 `Frontend_spec.md`（尤其 §22 技术债表）和 `REMINDERS_PLAN.md` 的状态表。
 

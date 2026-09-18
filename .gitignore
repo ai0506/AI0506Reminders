@@ -4,6 +4,13 @@
 .env.*
 *.local.xcconfig
 
+# 隐私数据（禁止提交）。跟 Calendar 的 production/ 一个路数：文件在仓库里放着，
+# 但不被追踪。AI 回归集就在 private/ai-probe/，里面是真实课表、真实 Deadline 标题
+# 和一位教师的姓名——这是公开仓库，Calendar 的 migration 0014 正因为教师姓名属于
+# 第三方个人信息才把 courses.teacher 写成 NULL。
+# 往这里放东西之前先 `git check-ignore -v <路径>` 确认一下，别靠记忆。
+private/
+
 # Xcode 用户态（窗口布局、scheme 管理），与代码无关
 **/xcuserdata/
 *.xcuserstate
