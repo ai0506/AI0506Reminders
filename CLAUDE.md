@@ -133,6 +133,16 @@ xcodebuild -project AI0506Reminders.xcodeproj -scheme AI0506Reminders -destinati
 真机上的症状是「点了没反应」——「清除课程」要清三个字段，全被盖回去。
 `get` 里读 `self.xxx`，另外多字段的清除合成一次写入。
 
+**sheet 打开时，别从它下面那层弹 alert。** iPadOS 26 上主界面的 `.alert` 在 sheet 开着时呈现，
+会把 sheet 直接顶掉——新建失败时表单连同填的内容一起消失（模拟器实测）。sheet 里的错误由 sheet
+自己弹；`ContentView` 的全局 alert 在任何 sheet 打开时不呈现。
+
+**确认框（`confirmationDialog`）里别调 sheet 的 `dismiss()`。** 确认框还在屏幕上，那个 `dismiss()`
+关掉的是确认框本身，sheet 纹丝不动。让父视图把 `isPresented` 设为 false，sheet 和确认框会一起收走。
+
+**模拟器工具的 `screenshot` 会慢一两帧。** 点完马上截，拍到的常是点之前的画面，别据此判断「没反应」。
+拿不准时 `xcrun simctl io booted screenshot` 再截一张（实时的）。我因此误判过一次「关不掉」。
+
 **`Form` 行里放多个自定义按钮，每个都要 `.buttonStyle(.borderless)`。** 不然 SwiftUI 把整行合并成一个行级操作——点任意一个标签会把整行所有标签一起切换。`TagPicker` 就是这么踩过一次。
 
 **后端返回的 Deadline 没有可用的分类 id。** `CalendarAPIRepository.DeadlineDTO.model` 把 category id 硬编码成 `"uncatalogued"`，真正的 id 靠 `DeadlineStore.applyCatalog` 用**分类名**回填。所以：分类一旦在 Calendar 侧被归档（`GET /api/categories` 就不返回它了），回填失败，那条 Deadline 会在所有分类筛选下消失。科目同理——`GET /api/subjects` 只返回 `active = 1` 的。动这块之前先想清楚归档 / 停用数据怎么办。

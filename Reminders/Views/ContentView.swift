@@ -25,30 +25,40 @@ struct ContentView: View {
         .tint(RemindersTheme.accent)
         .background(RemindersTheme.paper)
         .sheet(isPresented: $showingCreate) {
-            DeadlineEditorSheet(title: "新建截止事项", categories: store.categories, subjects: store.subjects, availableTags: store.availableTags, tagSuggestions: store.tagSuggestions) { draft in
-                let created = await store.create(draft)
-                if created { showingCreate = false }
-                return created
+            DeadlineEditorSheet(title: "新建截止事项", categories: store.categories, subjects: store.subjects, availableTags: store.availableTags, tagSuggestions: store.tagSuggestions, onSave: submit) {
+                showingCreate = false
             }
         }
         .sheet(isPresented: $showingAI) {
-            AIComposerSheet(store: store, categories: store.categories, subjects: store.subjects, availableTags: store.availableTags) { draft in
-                let created = await store.create(draft)
-                if created { showingAI = false }
-                return created
+            AIComposerSheet(store: store, categories: store.categories, subjects: store.subjects, availableTags: store.availableTags, onCreate: submit) {
+                showingAI = false
             }
         }
         .sheet(isPresented: $showingSettings) {
             AppSettingsSheet(store: store, connection: connection)
         }
+        // sheet 开着的时候这里不弹：iPadOS 26 上从 sheet 下面这层弹 alert 会把 sheet
+        // 直接顶掉（模拟器实测），新建表单里填的东西跟着丢。sheet 里的错误由 sheet 自己弹，
+        // 其余的错误等 sheet 关了再弹。
         .alert("无法更新截止事项", isPresented: Binding(
-            get: { store.errorMessage != nil },
+            get: { store.errorMessage != nil && !isPresentingSheet },
             set: { if !$0 { store.errorMessage = nil } }
         )) {
             Button("好", role: .cancel) { store.errorMessage = nil }
         } message: {
             Text(store.errorMessage ?? "")
         }
+    }
+
+    private var isPresentingSheet: Bool { showingCreate || showingAI || showingSettings }
+
+    /// 创建成功返回 nil；失败返回给 sheet 就地展示的错误说明。
+    /// 错误从全局 `errorMessage` 上摘下来，否则 sheet 关掉之后外层还会再弹一次同一个错误。
+    private func submit(_ draft: DeadlineDraft) async -> String? {
+        if await store.create(draft) { return nil }
+        let message = store.errorMessage ?? "请稍后重试。"
+        store.errorMessage = nil
+        return message
     }
 }
 

@@ -6,6 +6,7 @@ struct AppSettingsSheet: View {
     @Environment(\.dismiss) private var dismiss
     @AppStorage("deadline-alerts-enabled") private var alertsEnabled = false
     @State private var notificationMessage: String?
+    @State private var confirmingDisconnect = false
 
     var body: some View {
         NavigationStack {
@@ -33,8 +34,18 @@ struct AppSettingsSheet: View {
                             Task { await connection.connect(store: store) }
                         }
                         .disabled(connection.isConnecting)
+                        // 断开会把地址和令牌从这台 iPad 上删掉，误点一次就得重新去找令牌，
+                        // 所以要确认。完成 / 重开不在此列，那两个随时可逆（§11.3）。
                         Button("断开并使用演示工作区", role: .destructive) {
-                            Task { await connection.disconnect(store: store) }
+                            confirmingDisconnect = true
+                        }
+                        .confirmationDialog("断开 Calendar？", isPresented: $confirmingDisconnect, titleVisibility: .visible) {
+                            Button("断开", role: .destructive) {
+                                Task { await connection.disconnect(store: store) }
+                            }
+                            Button("取消", role: .cancel) {}
+                        } message: {
+                            Text("这台 iPad 上保存的地址和访问令牌会被删除，之后要重新填写才能连接。")
                         }
                     }
 

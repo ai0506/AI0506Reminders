@@ -5,7 +5,10 @@ struct AIComposerSheet: View {
     let categories: [DeadlineCategory]
     let subjects: [DeadlineSubject]
     let availableTags: [DeadlineTag]
-    let onCreate: (DeadlineDraft) async -> Bool
+    /// 成功返回 nil，失败返回要给用户看的错误说明。
+    let onCreate: (DeadlineDraft) async -> String?
+    /// 由父视图关掉 sheet，理由同 `DeadlineEditorSheet.onDiscard`。
+    let onDiscard: () -> Void
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -20,6 +23,16 @@ struct AIComposerSheet: View {
     @State private var parseTask: Task<Void, Never>?
     @State private var revealTask: Task<Void, Never>?
     @State private var isParsing = false
+    /// 模型刚交出来时的草稿。和 `result` 不一样就说明用户手动改过，
+    /// 重新分析前要先问一句，不能悄悄盖掉。
+    @State private var parsedResult: AIParseResult?
+    @State private var confirmingClose = false
+    @State private var confirmingReparse = false
+    @State private var createError: String?
+
+    /// 有东西会随关闭一起丢掉：写了原文，或者已经有草稿。
+    private var hasContent: Bool { !trimmedPrompt.isEmpty || result != nil }
+    private var draftWasEdited: Bool { result != nil && result != parsedResult }
 
     var body: some View {
         NavigationStack {
@@ -37,13 +50,40 @@ struct AIComposerSheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("关闭") {
-                        cancelParsing()
-                        dismiss()
+                        if hasContent {
+                            confirmingClose = true
+                        } else {
+                            cancelParsing()
+                            dismiss()
+                        }
+                    }
+                    .disabled(isCreating)
+                    .confirmationDialog("放弃这次 AI 创建？", isPresented: $confirmingClose, titleVisibility: .visible) {
+                        Button("放弃", role: .destructive) {
+                            cancelParsing()
+                            onDiscard()
+                        }
+                        Button("继续编辑", role: .cancel) {}
+                    } message: {
+                        Text("原文和草稿都不会保存。")
                     }
                 }
             }
         }
         .presentationDetents([.large])
+        // 点 sheet 外面、往下拖都会直接关掉；有原文或草稿时只能走「关闭」，由它来确认。
+        .interactiveDismissDisabled(hasContent || isCreating)
+        // 兜底：不管 sheet 是怎么关掉的，正在跑的端侧推理都要停。
+        // 只在「关闭」按钮里停的话，其它关闭路径会让模型在后台继续占着 ANE 跑完。
+        .onDisappear { cancelParsing() }
+        .alert("无法创建截止事项", isPresented: Binding(
+            get: { createError != nil },
+            set: { if !$0 { createError = nil } }
+        )) {
+            Button("好", role: .cancel) { createError = nil }
+        } message: {
+            Text((createError ?? "") + "\n草稿还在，可以直接重试。")
+        }
         // 只在这里取课程数据。**不预热模型**——那次加载会让整台设备卡住，
         // 连系统键盘一起卡，理由见 `DeadlineStore.prepareAIPanel()`。
         .task { store.prepareAIPanel() }
@@ -94,11 +134,30 @@ struct AIComposerSheet: View {
                 .font(.footnote)
                 .foregroundStyle(.secondary)
 
-                Button(isParsing ? "正在分析…" : "分析这段话") { startParsing() }
+                HStack(spacing: 12) {
+                    Button(isParsing ? "正在分析…" : "分析这段话") {
+                        if draftWasEdited { confirmingReparse = true } else { startParsing() }
+                    }
                     .buttonStyle(.borderedProminent)
                     .tint(RemindersTheme.accent)
                     .foregroundStyle(RemindersTheme.actionForeground)
                     .disabled(isParsing || trimmedPrompt.isEmpty)
+                    .confirmationDialog("用新的分析结果替换草稿？", isPresented: $confirmingReparse, titleVisibility: .visible) {
+                        Button("重新分析", role: .destructive) { startParsing() }
+                        Button("回到草稿") { phase = .draft }
+                        Button("取消", role: .cancel) {}
+                    } message: {
+                        Text("你在草稿里做的修改会被覆盖。")
+                    }
+
+                    // 从「修改原文」退回来之后，得有一条不重新分析就能回去的路，
+                    // 否则看一眼原文就只能重跑一遍、手改的草稿也跟着没了。
+                    if result != nil {
+                        Button("返回草稿") { phase = .draft }
+                            .buttonStyle(.bordered)
+                            .disabled(isParsing)
+                    }
+                }
             }
             .padding(24)
             .frame(maxWidth: 680, alignment: .leading)
@@ -191,9 +250,9 @@ struct AIComposerSheet: View {
                 Button(isCreating ? "正在创建…" : "创建截止事项") {
                     Task {
                         isCreating = true
-                        let created = await onCreate(result.draft)
+                        let failure = await onCreate(result.draft)
                         isCreating = false
-                        if created { dismiss() }
+                        if let failure { createError = failure } else { dismiss() }
                     }
                 }
                 .buttonStyle(.borderedProminent)
@@ -254,6 +313,7 @@ struct AIComposerSheet: View {
             guard !Task.isCancelled else { return }
             isParsing = false
             result = parsed
+            parsedResult = parsed
             phase = .draft
             parseTask = nil
         }
